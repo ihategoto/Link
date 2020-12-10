@@ -1,0 +1,206 @@
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>{{index}}</title>
+  </head>
+  <body>
+    <div class="header">
+      <div class="inner_header">
+        <div class="logo_container">
+          <h1>NODE<span>PAGE</span></h1>
+        </div>
+
+        <ul class="navigation">
+          <li><a>Home</a></li>
+        </ul>
+
+      </div>
+    </div>
+
+    <div class="table" id="table">
+      <div class="comandi" id="comandi"> 
+        <div class="comandi-third">
+          <h4>Report</h4>
+          <button class="btn_pdf">PDF</button>
+        </div>
+
+        <div class="comandi-third">
+          <h4>Led rosso</h4>
+          <form action="/node/write/" method="post">
+            <input type="hidden" name="slave_address" value="1">
+            <input type="hidden" name="coil_register" value="0">
+            <input id="vent_on" class="vent_on" type="submit" name="value" value="1">
+            <input id="vent_off" class="vent_off" type="submit" name="value" value="0">
+          </form>
+        </div>
+        <div class="comandi-third">
+          <h4>Led verde</h4>
+          <form action="/node/write/" method="post">
+            <input type="hidden" name="slave_address" value="1">
+            <input type="hidden" name="coil_register" value="1">
+            <input id="lamp_on" class="lamp_on" type="submit" name="value" value="1">
+            <input id="lamp_off" class="lamp_off" type="submit" name="value" value="0">
+          </form>
+        </div>
+       <!-- <div class="comandi-third">
+          <h4>Livello CO2</h4>
+          <div class="range"> 
+            <input class="slider" id="slider_co2" type="range" min="1" max="100" value="50" steps="1">
+          </div>
+        </div>-->
+
+        
+      </div>
+    </div> <!--Chiusura tabella-->
+    
+    
+    <div class="container">
+      <h2>Lista dei nodi</h2>  
+      <div class="select-box">
+        <div class="options-container">
+          {{#each items}}
+          <!--<a class="nodo" href="/node/{{this._id}}">-->
+            <div class="option" onclick="getData('{{this._id}}')">
+              <label class="label" for="{{ this._id }}">Nodo {{ this._id }}</label>
+            </div>
+          <!--</a>-->
+          {{/each}}
+        </div>
+        <div class="selected">Seleziona nodo<i class="arrow down"></i></div>
+        <div class="search-box">
+          <input class="search-input" type="text" placeholder="Cerca...">
+        </div>
+      </div>
+    </div>
+
+    <div class="footer"> 
+      <div class="inner_footer">
+        <div class="logo_container">
+          <img src="/images/logo_link_tra.png" alt="">
+        </div>
+      
+        <div class="footer_third">
+          <h1>Need Help?</h1>
+          <a href="#">Terms &amp; Conditions</a>
+          <a href="#">Privacy Policy</a>
+        </div>
+
+        <div class="footer_third">
+          <h1>More</h1>
+          <a href="#">Documentation</a>
+        </div>
+
+        <div class="footer_third">
+          <h1>Follow Us</h1>
+          <li><a href="#"><i class="fa fa-facebook"></i></a></li>
+          <li><a href="#"><i class="fa fa-instagram"></i></a></li>
+          <li><a href="#"><i class="fa fa-twitter"></i></a></li>
+          <span>
+            © Link S.r.l.<br>
+            Italy, Rome - 00012<br>
+            Via Bruno Pontecorvo, 10<br>
+          </span>
+        </div>
+      </div>
+    </div>
+    <script>
+      let timeout;
+      function getData(id){
+        console.log("Questo e l'id: "+id);
+        $(function(){
+            clearTimeout(timeout);
+            //alert("Dati aggiornati");
+            //this fuction accept json data type
+            $.ajax({ 
+              //url: 'http://localhost:3000/node/'+id,
+              url: '/node/'+id,
+              method: 'GET',
+              dataType: 'json'
+              })
+              .done(function(data){
+                //ajax call worked
+                console.log('Success!', data);
+                //console.log(data);
+                //NOTE: update the table
+
+                //elimino la tabella precedente
+                if($('#tbl').length > 0){
+                  //esiste
+                  //elimino la tabella precedente
+                  document.getElementById("tbl").remove(document.getElementById("tbl"));
+                }else{
+                  console.log("La tabella non e' stata ancora creata");
+                }
+
+                //creo dinamicamente la tabella e celle fisse (nome e tempo)
+                let table = document.createElement("table");
+                //table.classList.add("tbl");
+                table.id = "tbl";
+                let main_tr = document.createElement("tr");
+
+                // celle per il nome
+                let td_nome = document.createElement("td");
+                let text_td_nome = document.createTextNode("Nome");
+                let td_val_nome = document.createElement("td");
+                let text_nome = document.createTextNode("Nodo "+data.slave);
+                
+                // celle per il tempo
+                let td_tempo = document.createElement("td");
+                let text_td_tempo = document.createTextNode("Tempo");
+                let td_val_tempo = document.createElement("td");
+                let text_tempo = document.createTextNode(data.date);
+
+                // inserisco il testo dentro i td
+                td_nome.appendChild(text_td_nome);
+                td_nome.classList.add("info");
+                td_val_nome.appendChild(text_nome);
+                td_tempo.appendChild(text_td_tempo);
+                td_tempo.classList.add("info");
+                td_val_tempo.appendChild(text_tempo);
+
+                // inserisco i td dentro il tr
+                main_tr.appendChild(td_nome);
+                main_tr.appendChild(td_val_nome);
+                main_tr.appendChild(td_tempo);
+                main_tr.appendChild(td_val_tempo);
+
+                // inserisco il tr dentro la tabella
+                table.appendChild(main_tr);
+                // inserisco la tabella nel div "table" prima dei comandi
+                document.getElementById("comandi").insertBefore(table, document.getElementById("comandi").childNodes[0]);
+   
+                //***Ciclo per ogni elemento contenuto in sensors[sensore1, sensore2]
+                let row = document.createElement("tr");
+                let tbody = document.createElement("tbody");               
+                for(let i=0; i<data.sensors.length; i++){
+                  //Creo le componenti td, text
+                  let td_name = document.createElement("td");
+                  let textName = document.createTextNode(data.sensors[i].name);
+                  let td_value = document.createElement("td"); 
+                  let textValue = document.createTextNode(data.sensors[i].value);
+                  //Assegno label e style alle celle
+                  td_name.appendChild(textName);
+                  td_name.classList.add("info");
+                  td_value.appendChild(textValue);
+                  if(i % 2 === 0){
+                    //Creo riga della tabella
+                    row = document.createElement("tr");
+                    tbody.appendChild(row);
+                  }
+                  row.appendChild(td_name);
+                  row.appendChild(td_value);
+                }//chiusura for
+                table.appendChild(tbody);
+
+              })
+              .fail(function(err){
+                //ajax call failed
+                console.log('Error: '+err);
+              })
+          timeout = setTimeout(getData, 5000, id);
+        });
+      }
+    </script>
+  </body>
+</html>
