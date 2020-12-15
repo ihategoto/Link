@@ -100,6 +100,8 @@ class Handler:
                                 {
                                 'name' : sensor['name'],
                                 'address' : sensor['address'],
+                                'type' : sensor['type'],
+                                'um' : sensor['um'],
                                 'value' : value
                                 }
                                 ],
@@ -108,6 +110,8 @@ class Handler:
                         post['sensors'].append({
                             'name' : sensor['name'],
                             'address' : sensor['address'],
+                            'type' : sensor['type'],
+                            'um' : sensor['um'],
                             'value' : value
                         })
                 except Exception as e:
