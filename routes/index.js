@@ -40,7 +40,7 @@ router.get('/', async (req,res) => {
                   }}
           ])
 ).map((item) => ({_id:item._id, slave: item.slave}));
-  console.log("STAMPA NODI:"+nd);
+  //console.log("STAMPA NODI:"+nd);
   res.render('index',{items: nd});
 });
 
@@ -68,7 +68,7 @@ router.get('/node/:id', async (req, res) => {
     ]))
     // non leggeva bene il documento
     //const data = nd.map((item) => ({...item, sensors: item.sensors.map(s => ({...s}))}));
-    console.log(data);
+    //console.log(data);
     if(data.length === 0) {
       //gestire errore
     }
@@ -83,7 +83,12 @@ router.get('/node/:id', async (req, res) => {
 Scrive su una pipe per comunicare con backend python che gestisce
 gli slave modbus.
 */
+/*
+Aggiungere le nuove notazioni per gli address
+Modificare in modo da usare le nuove variabili
+*/
 router.post('/node/write/', async (req, res) => {
+  console.log("POST COMANDI");
   let slave_address = req.body.slave_address;
   let coil_register = req.body.register_address;
   let value = req.body.value;
@@ -96,9 +101,8 @@ router.post('/node/write/', async (req, res) => {
     fs.writeSync(fd, data);
     fs.close(fd, () => {});
   });
-  const nd = (await Nodo.find()).map((item) => ({_id:item._id, nome: item.nome}));
-  console.log(nd);
-  res.render('index',{items: nd});
+  // mandare una risposta (?)
+  res.json({msg: "Working"});
 });
 
 

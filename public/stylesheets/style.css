@@ -364,14 +364,18 @@
     width: 100%;
     padding: 8px;
     display: inline-block;
+    /*Nascondo i comandi che verrano resi visibili tramite la selezione del nodo*/
+    display: none;
   }
 
   .comandi-third {
+    padding: 8px;
     display: block;
   }
 
   .comandi .comandi-third {
-    width: calc(22.5%);
+    /*width: calc(22.5%);*/
+    
     margin-right: 10px;
     float: left;
     height: 100%;
@@ -382,6 +386,8 @@
     background-color: #2f3640;
     padding: 8px;
     color: white;
+    outline: none;
+    border: none;
   }
   
   .vent_off {
@@ -389,6 +395,8 @@
     background-color: #2f3640;
     padding: 8px;
     color: white;
+    outline: none;
+    border: none;
   }
 
   .lamp_on {
@@ -396,6 +404,8 @@
     background-color: #2f3640;
     padding: 8px;
     color: white;
+    outline: none;
+    border: none;
   }
   
   .lamp_off {
@@ -403,6 +413,24 @@
     background-color: #2f3640;
     padding: 8px;
     color: white;
+    outline: none;
+    border: none;
+  }
+
+  .vent_speed {
+    border-radius: 8px 8px 8px 8px;
+    padding: 8px;
+    outline: none;
+    border: none;
+  }
+
+  .speed_submit  {
+    border-radius: 0px 8px 8px 0px;
+    background-color: #2f3640;
+    padding: 8px;
+    color: white;
+    outline: none;
+    border: none;
   }
 
   .vent_on:hover {
@@ -421,11 +449,17 @@
     background: #414b57;
   }
 
+  .speed_submit:hover {
+    background: #414b57;
+  }
+
   .btn_pdf {
     border-radius: 8px 8px 8px 8px;
     background-color: #2f3640;
     padding: 8px;
     color: white;
+    outline: none;
+    border: none;
   }
 
   .btn_pdf:hover {

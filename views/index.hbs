@@ -19,38 +19,30 @@
     </div>
 
     <div class="table" id="table">
-      <div class="comandi" id="comandi"> 
+      <div class="comandi" id="comandi">
+        <!--Report PDF button--> 
         <div class="comandi-third">
           <h4>Report</h4>
-          <button class="btn_pdf">PDF</button>
+          <button class="btn_pdf" onclick="reportPDF()">PDF</button>
         </div>
 
+        <!--Slider ventola-->
         <div class="comandi-third">
-          <h4>Led rosso</h4>
-          <form action="/node/write/" method="post">
+          <h4>Velocità ventola</h4>
+          <input id="vent_speed" class="vent_speed" type="number" min="0" max="100" value="0">
+          <button id="speed_submit" class="speed_submit" onclick="ventSpeed()">></button>
+        </div>
+
+        <!--Coil switch-->
+        <div class="comandi-third">
+          <h4>Ventola</h4>
             <input type="hidden" name="slave_address" value="1">
             <input type="hidden" name="coil_register" value="0">
-            <input id="vent_on" class="vent_on" type="submit" name="value" value="1">
-            <input id="vent_off" class="vent_off" type="submit" name="value" value="0">
-          </form>
+            <input type="hidden" id="clickFlag" value="0">
+            <button id="vent_on" class="vent_on" name="value" value="1" onclick="switchCoil()">ON</button>
+            <button id="vent_off" class="vent_off" name="value" value="0" onclick="switchCoil()">OFF</button>
         </div>
-        <div class="comandi-third">
-          <h4>Led verde</h4>
-          <form action="/node/write/" method="post">
-            <input type="hidden" name="slave_address" value="1">
-            <input type="hidden" name="coil_register" value="1">
-            <input id="lamp_on" class="lamp_on" type="submit" name="value" value="1">
-            <input id="lamp_off" class="lamp_off" type="submit" name="value" value="0">
-          </form>
-        </div>
-       <!-- <div class="comandi-third">
-          <h4>Livello CO2</h4>
-          <div class="range"> 
-            <input class="slider" id="slider_co2" type="range" min="1" max="100" value="50" steps="1">
-          </div>
-        </div>-->
 
-        
       </div>
     </div> <!--Chiusura tabella-->
     
@@ -60,11 +52,9 @@
       <div class="select-box">
         <div class="options-container">
           {{#each items}}
-          <!--<a class="nodo" href="/node/{{this._id}}">-->
             <div class="option" onclick="getData('{{this._id}}')">
               <label class="label" for="{{ this._id }}">Nodo {{ this._id }}</label>
             </div>
-          <!--</a>-->
           {{/each}}
         </div>
         <div class="selected">Seleziona nodo<i class="arrow down"></i></div>
@@ -106,6 +96,7 @@
     </div>
     <script>
       let timeout;
+      /***Richiesta ajax get per prendere i dati del nodo selezionato***/
       function getData(id){
         console.log("Questo e l'id: "+id);
         $(function(){
@@ -120,17 +111,17 @@
               })
               .done(function(data){
                 //ajax call worked
+                //data contiene il json passata tramite express
                 console.log('Success!', data);
-                //console.log(data);
-                //NOTE: update the table
+
+                //rendo visibili i comandi
+                document.getElementById("comandi").style.display = "block";
 
                 //elimino la tabella precedente
                 if($('#tbl').length > 0){
                   //esiste
                   //elimino la tabella precedente
                   document.getElementById("tbl").remove(document.getElementById("tbl"));
-                }else{
-                  console.log("La tabella non e' stata ancora creata");
                 }
 
                 //creo dinamicamente la tabella e celle fisse (nome e tempo)
@@ -174,22 +165,45 @@
                 let row = document.createElement("tr");
                 let tbody = document.createElement("tbody");               
                 for(let i=0; i<data.sensors.length; i++){
-                  //Creo le componenti td, text
-                  let td_name = document.createElement("td");
-                  let textName = document.createTextNode(data.sensors[i].name);
-                  let td_value = document.createElement("td"); 
-                  let textValue = document.createTextNode(data.sensors[i].value);
-                  //Assegno label e style alle celle
-                  td_name.appendChild(textName);
-                  td_name.classList.add("info");
-                  td_value.appendChild(textValue);
-                  if(i % 2 === 0){
-                    //Creo riga della tabella
-                    row = document.createElement("tr");
-                    tbody.appendChild(row);
+                  //dati tabella -> Input Register type: 2
+                  if(data.sensors[i].type == 2){
+                    //Creo le componenti td, text
+                    let td_name = document.createElement("td");
+                    let textName = document.createTextNode(data.sensors[i].name);
+                    let td_value = document.createElement("td"); 
+                    let textValue = document.createTextNode(data.sensors[i].value+" "+data.sensors[i].um);
+                    //Assegno label e style alle celle
+                    td_name.appendChild(textName);
+                    td_name.classList.add("info");
+                    td_value.appendChild(textValue);
+                    if(i % 2 === 0){
+                      //Creo riga della tabella
+                      row = document.createElement("tr");
+                      tbody.appendChild(row);
+                    }
+                    row.appendChild(td_name);
+                    row.appendChild(td_value);
+                  }else if(data.sensors[i].type == 1){
+                    //Gestisco le coil(bottoni/switch) -> Coils type: 1 
+                    //Modifico il flag del click
+                    if(document.getElementById("clickFlag").value == 0){
+                      document.getElementById("clickFlag").value = 1;
+                      //cambio stato attivo allo switch
+                      if(data.sensors[i].value == 1){ //on
+                        document.getElementById(data.sensors[i].name+"_on").style.background = "#414b57"; 
+                        document.getElementById(data.sensors[i].name+"_on").disabled = true;
+                      }else{
+                        //off -> value: 0
+                        document.getElementById(data.sensors[i].name+"_off").style.background = "#414b57";
+                        document.getElementById(data.sensors[i].name+"_on").disabled = true;
+                      }
+                    }
+                  }else if(data.sensors[i].type == 3){
+                    //Gestisco la valvola -> Holding Register type: 3
+                    document.getElementById("vent_speed").value = data.sensors[i].value;
+                  }else{
+                    console.log("type letto non valido, type validi (1,2,3)");
                   }
-                  row.appendChild(td_name);
-                  row.appendChild(td_value);
                 }//chiusura for
                 table.appendChild(tbody);
 
@@ -200,6 +214,64 @@
               })
           timeout = setTimeout(getData, 5000, id);
         });
+      }
+
+      /***Funzioni per i comandi***/
+      //Velocita ventola
+      function ventSpeed(){
+        $(function(){
+          $.ajax({
+            url:'/node/write/',
+            method: 'POST',
+            dataType: 'json'
+          })
+          .done(function(){
+            //ajax call worked
+            console.log("WOOOOW");
+          })
+          .fail(function(err){
+            //ajax call failed
+            console.log('Error: ', err);
+          })
+        })
+      }
+
+      //Gestione switch (bottoni on/off)
+      function switchCoil(){
+        $(function(){
+          $.ajax({
+            url:'/node/write/',
+            method: 'POST',
+            dataType: 'json'
+          })
+          .done(function(){
+            //ajax call worked
+            console.log("WOOOOW");
+          })
+          .fail(function(err){
+            //ajax call failed
+            console.log('Error: '+err);
+          })
+        })
+      }
+
+      //Gestione download report PDF
+      function reportPDF(){
+        $(function(){
+          $.ajax({
+            url:'/node/write/',
+            method: 'POST',
+            dataType: 'json'
+          })
+          .done(function(){
+            //ajax call worked
+            console.log("WOOOOW");
+          })
+          .fail(function(err){
+            //ajax call failed
+            console.log('Error: '+err);
+          })
+        })
       }
     </script>
   </body>

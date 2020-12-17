@@ -8,86 +8,6 @@ const { Schema } = mongoose;
  * nodo is the document
  * */ 
 
-//PS: Update the required to some data
-/*const NodoSchema = new Schema({
-    nome:{
-        type: String,
-        required: true
-    },
-    time:{
-        type: String,
-    },
-    val_CO:{
-        type: String,
-        required: false,
-        min: 0,
-        max: 400
-    },
-    val_eCO2:{
-        type: String,
-        required: false,
-        min: 450,
-        max: 2000
-    },
-    val_TVCO:{
-        type: String,
-        required: false,
-        min: 125,
-        max: 600
-    },
-    val_PM1_0:{
-        type: String,
-        required: false,
-        min: 0,
-        max: 1000},
-    val_PM2_5:{
-        type: String,
-        required: false,
-        min: 0,
-        max: 1000
-    },
-    val_PM4:{
-        type: String,
-        required: false,
-        min: 0,
-        max: 1000
-    },
-    val_PM10:{
-        type: String,
-        required: false,
-        min: 0,
-        max: 1000
-    },
-    val_PD:{
-        type: String,
-        required: false,
-        min: 1,
-        max: 30
-    },
-    val_T:{
-        type: String,
-        required: false,
-        min: -40,
-        max: 100
-    },
-    val_Umi:{
-        type: String,
-        required: false,
-        min: 0,
-        max: 100
-    },
-    val_H2O2:{
-        type: String,
-        required: false,
-    },
-    val_O3:{
-        type: String,
-        required: false,
-        min: 0,
-        max: 10
-    }
-});*/
-
 const NodoSchema = new Schema({
     date: {
         type: Date,
@@ -105,6 +25,13 @@ const NodoSchema = new Schema({
         address: {
             type: Number,
             required: true
+        },
+        type: {
+            type: Number,
+            required: true,
+        },
+        um : {
+            type: String,
         },
         value: {
             type: Number,
