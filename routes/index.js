@@ -90,9 +90,10 @@ Modificare in modo da usare le nuove variabili
 router.post('/node/write/', async (req, res) => {
   console.log("POST COMANDI");
   let slave_address = req.body.slave_address;
-  let coil_register = req.body.coil_register;
+  let register_address = req.body.register_address;
+  console.log("register address: "+register_address);
   let value = req.body.value;
-  let data = slave_address + ',' + coil_register + ',' + value;
+  let data = slave_address + ',' + register_address + ',' + value;
   fs.open(FIFO_PATH, 'w', (err, fd) => {
     if(err){
       console.log("Qualcosa è andato storto nell'apertura del file:" + err);

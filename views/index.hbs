@@ -20,27 +20,28 @@
 
     <div class="table" id="table">
       <div class="comandi" id="comandi">
+        <input type="hidden" id="clickFlag" value="0">
         <!--Report PDF button--> 
         <div class="comandi-third">
           <h4>Report</h4>
           <button class="btn_pdf" onclick="reportPDF()">PDF</button>
         </div>
-
+        <!--Slave id-->
+        <input type="hidden" id="slave_address" name="slave_address" value="99">
         <!--Slider ventola-->
         <div class="comandi-third">
           <h4>Velocità ventola</h4>
+          <input type="hidden" id="register_address_speed" name="register_address_speed" value="40000">
           <input id="vent_speed" class="vent_speed" type="number" min="0" max="100" value="0">
-          <button id="speed_submit" class="speed_submit" onclick="ventSpeed()">></button>
+          <button id="speed_submit" class="speed_submit" onclick="postVelocita()">></button>
         </div>
 
         <!--Coil switch-->
         <div class="comandi-third">
           <h4>Ventola</h4>
-            <input type="hidden" name="slave_address" value="1">
-            <input type="hidden" name="coil_register" value="0">
-            <input type="hidden" id="clickFlag" value="0">
-            <button id="vent_on" class="vent_on" name="value" value="1" onclick="switchCoil()">ON</button>
-            <button id="vent_off" class="vent_off" name="value" value="0" onclick="switchCoil()">OFF</button>
+            <input type="hidden" id="register_address_coil" name="register_address_coil" value="0">
+            <button id="vent_on" class="vent_on" name="value" value="1" onclick="postCoil()">ON</button>
+            <button id="vent_off" class="vent_off" name="value" value="0" onclick="postCoil()">OFF</button>
         </div>
 
       </div>
@@ -163,7 +164,12 @@
    
                 //***Ciclo per ogni elemento contenuto in sensors[sensore1, sensore2]
                 let row = document.createElement("tr");
-                let tbody = document.createElement("tbody");               
+                let tbody = document.createElement("tbody");
+
+                //Aggiorno lo slave_address con lo slave preso dal db
+                console.log(data.slave);
+                document.getElementById("slave_address").value = data.slave;     
+
                 for(let i=0; i<data.sensors.length; i++){
                   //dati tabella -> Input Register type: 2
                   if(data.sensors[i].type == 2){
@@ -217,42 +223,25 @@
       }
 
       /***Funzioni per i comandi***/
-      //Velocita ventola
-      function ventSpeed(){
-        $(function(){
-          $.ajax({
-            url:'/node/write/',
-            method: 'POST',
-            dataType: 'json'
-          })
-          .done(function(){
-            //ajax call worked
-            console.log("WOOOOW");
-          })
-          .fail(function(err){
-            //ajax call failed
-            console.log('Error: ', err);
-          })
-        })
+
+      //Gestione valvola POST
+      function postVelocita(){
+        $.post('/node/write/', {
+          slave_address: document.getElementById("slave_address").value,
+          register_address: document.getElementById("register_address_speed").value
+        }, function(returnedData){
+          console.log(returnedData);
+        }, 'multipart');
       }
 
-      //Gestione switch (bottoni on/off)
-      function switchCoil(){
-        $(function(){
-          $.ajax({
-            url:'/node/write/',
-            method: 'POST',
-            dataType: 'json'
-          })
-          .done(function(){
-            //ajax call worked
-            console.log("WOOOOW");
-          })
-          .fail(function(err){
-            //ajax call failed
-            console.log('Error: '+err);
-          })
-        })
+      //Gestione reele POST
+      function postCoil(){
+        $.post('/node/write/', {
+          slave_address: document.getElementById("slave_address").value,
+          register_address: document.getElementById("register_address_coil").value
+        }, function(returnedData){
+          console.log(returnedData);
+        }, 'multipart');
       }
 
       //Gestione download report PDF
