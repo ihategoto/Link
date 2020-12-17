@@ -91,7 +91,10 @@ class Handler:
                     continue
                 address, functioncode, callback = self.get_call_info(slave, sensor)
                 try:
-                    value = callback(address, functioncode = functioncode)
+                    if sensor['type'] == HOLDING_REGISTER or sensor['type'] == INPUT_REGISTER:
+                        value = callback(address, functioncode = functioncode, number_of_decimals = sensor['decimals'] if 'decimals' in sensor else 0)
+                    else:
+                        value = callback(address, functioncode = functioncode)
                     if 'sensors' not in post:
                         post = {
                             'date' : datetime.datetime.utcnow(),
@@ -178,21 +181,21 @@ class Handler:
 
         while True:
             try:
-                    fifo = open(PIPE_NAME, 'r')
-                    while True:
-                        data = fifo.read()
-                        if len(data) == 0:
-                            break
-                        """
-                        Data: slave_address,coil_address,value
-                        """
-                        decoded_data = data.split(',')
-                        try:
-                            slave = minimalmodbus.Instrument(SERIAL_PORT, int(decoded_data[0]))
-                            slave.write_bit(int(decoded_data[1]), int(decoded_data[2]), functioncode=5)
-                            print("Scrittura riuscita!")
-                        except Exception as e:
-                            print("Qualcosa è andato storto durante la scrittura su uno slave modbus:{}".format(str(e)))
+                fifo = open(PIPE_NAME, 'r')
+                while True:
+                    data = fifo.read()
+                    if len(data) == 0:
+                        break
+                    """
+                    Data: slave_address,coil_address,value
+                    """
+                    decoded_data = data.split(',')
+                    try:
+                        slave = minimalmodbus.Instrument(SERIAL_PORT, int(decoded_data[0]))
+                        slave.write_bit(int(decoded_data[1]), int(decoded_data[2]), functioncode=5)
+                        print("Scrittura riuscita!")
+                    except Exception as e:
+                        print("Qualcosa è andato storto durante la scrittura su uno slave modbus:{}".format(str(e)))
 
             except Exception:
                 print("Qualcosa è andato storto durante l'apertura della pipe!")

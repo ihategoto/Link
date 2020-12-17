@@ -85,9 +85,9 @@ gli slave modbus.
 */
 router.post('/node/write/', async (req, res) => {
   let slave_address = req.body.slave_address;
-  let coil_register = req.body.coil_register;
+  let coil_register = req.body.register_address;
   let value = req.body.value;
-  let data = slave_address + ',' + coil_register + ',' + value;
+  let data = slave_address + ',' + register_address + ',' + value;
   fs.open(FIFO_PATH, 'w', (err, fd) => {
     if(err){
       console.log("Qualcosa è andato storto nell'apertura del file:" + err);
