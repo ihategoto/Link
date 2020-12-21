@@ -13,6 +13,8 @@ BYTESIZE = 8
 PARITY = serial.PARITY_NONE
 STOP_BITS = 1
 MODE = minimalmodbus.MODE_RTU
+TIME_OUT_READ = 3
+TIME_OUT_WRITE = 5
 CLOSE_PORT_AFTER_EACH_CALL = False
 
 #MongoDB consts
@@ -41,6 +43,10 @@ SLAVES = get_slaves()
 
 scheduler = sched.scheduler(time.time, time.sleep)
 
+MANDATORY_FIELDS_SENSOR = ['name', 'address', 'type', 'um']
+MANDATORY_FIELDS_SLAVE = ['address', ]
+
+
 
 class Handler:
     """
@@ -50,7 +56,7 @@ class Handler:
     - Se è riuscito ad aprire un numero di connessioni diverse da 0, inizia il processo di refresh.
     - Configura una pipe con cui cominicare con Express.
     """
-    def __init__(self, slaves, mode, baudrate, bytesize, stop_bits, close_port_after_each_call, debug, refresh_rate):
+    def __init__(self, slaves, mode, baudrate, bytesize, stop_bits, time_out_read, time_out_write, close_port_after_each_call, debug, refresh_rate):
         #Se nel file di configurazione non vi è elencato nessuno slave chiudo il programma.
         if len(slaves) == 0:
             print('La lista degli slave è vuota.\nControllare il contenuto del file:{}'.format(CONFIG_FILE))
@@ -58,6 +64,9 @@ class Handler:
         self.refresh_rate = refresh_rate
         self.slave_instances = []
         for slave in slaves:
+            if not self.check_fields(slave, False):
+                print("Errore di configurazione in uno degli slave! Controllare {}!".format(CONFIG_FILE))
+                continue
             try:
                 self.slave_instances.append({'instance' : minimalmodbus.Instrument(SERIAL_PORT, slave['address'], mode = mode, close_port_after_each_call = close_port_after_each_call, debug = debug), 'info' : slave})
                 index = len(self.slave_instances) - 1
@@ -65,6 +74,8 @@ class Handler:
                 self.slave_instances[index]['instance'].serial.parity = PARITY
                 self.slave_instances[index]['instance'].serial.bytesize = BYTESIZE
                 self.slave_instances[index]['instance'].serial.stopbits = STOP_BITS
+                self.slave_instances[index]['instance'].serial.timeout = time_out_read
+                self.slave_instances[index]['instance'].serial.write_timeout = time_out_write
             except Exception as e:
                 print('Qualcosa è andato storto mentre cercavo di aprire una connessione con lo slave {}:{}'.format(slave['address'], str(e)))
         if len(self.slave_instances) == 0:
@@ -89,6 +100,8 @@ class Handler:
                 print('Sto scrivendo:{}'.format(sensor['name']))
                 if sensor['to_update'] == 0:
                     continue
+                if not self.check_fields(sensor, True):
+                    print('Errore di configurazione di un sensore appartenente allo slave {}! Salto la scrittura sul database.'.format(slave['address']))
                 address, functioncode, callback = self.get_call_info(slave, sensor)
                 try:
                     if sensor['type'] == HOLDING_REGISTER or sensor['type'] == INPUT_REGISTER:
@@ -200,4 +213,22 @@ class Handler:
             except Exception:
                 print("Qualcosa è andato storto durante l'apertura della pipe!")
 
-Handler(SLAVES, MODE, BAUDRATE, BYTESIZE, STOP_BITS, CLOSE_PORT_AFTER_EACH_CALL, DEBUG, REFRESH_RATE)
+    """
+    Controllo se il file di configurazione ha tutti i campi necessari per la scrittura sul database.
+    Parametri:
+
+    - obj: l'oggetto su cui controllare i campi.
+    - slave_or_sensor: flag che indica se i stanno controllando i campi di uno slave o di un sensore.
+    """
+    def check_fields(self, obj, slave_or_sensor):
+        if slave_or_sensor:
+            for field in MANDATORY_FIELDS_SENSOR:
+                if field not in obj:
+                    return False
+        else:
+            for field in MANDATORY_FIELDS_SLAVE:
+                if field not in obj:
+                    return False
+        return True
+
+Handler(SLAVES, MODE, BAUDRATE, BYTESIZE, STOP_BITS, TIME_OUT_READ, TIME_OUT_WRITE, CLOSE_PORT_AFTER_EACH_CALL, DEBUG, REFRESH_RATE)
