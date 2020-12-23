@@ -106,7 +106,7 @@ class Handler:
                         value = callback(address, functioncode = functioncode)
                     data = Point("sensori").tag("slave", str(slave['address'])).tag("sensor", str(sensor['address'])).field("value", value)
                     self.write_api.write(org = "Link", bucket = "sensors", record = data, write_precision = 's')
-                    self.write_api.flush()
+                    self.write_api.close()
                 except Exception as e:
                     print("Qualcosa è andato storto durante la lettura di {} da {}:{}".format(sensor['address'], slave['info']['address'], str(e)))
         scheduler.enter(REFRESH_RATE, 1, self.refresh_values)
