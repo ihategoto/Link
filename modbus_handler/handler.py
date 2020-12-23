@@ -1,7 +1,7 @@
 """
 Versione per la demo che gestisce un singolo dispositivo.
 """
-import os, stat, threading, minimalmodbus, serial, json, sched, time, datetime, atexit
+import os, stat, threading, minimalmodbus, serial, json, sched, time, datetime, atexit, random
 from influxdb_client import InfluxDBClient, Point, WriteOptions
 from influxdb_client.client.write_api import SYNCHRONOUS
 
@@ -102,10 +102,13 @@ class Handler:
                 """
                 address, functioncode, callback = self.get_call_info(slave, sensor)
                 try:
+                    """
                     if sensor['type'] == HOLDING_REGISTER or sensor['type'] == INPUT_REGISTER:
                         value = callback(address, functioncode = functioncode, number_of_decimals = sensor['decimals'] if 'decimals' in sensor else 0)
                     else:
                         value = callback(address, functioncode = functioncode)
+                    """
+                    value = random.randrange(0, 1000)
                     data = Point("sensori").tag("slave", str(slave['info']['address'])).tag("sensor", str(sensor['address'])).field("value", value)
                     self.write_api.write(org = "Link", bucket = "sensors", record = data, write_precision = 's')
                     self.write_api.close()
