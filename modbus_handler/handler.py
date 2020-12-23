@@ -106,7 +106,7 @@ class Handler:
                         value = callback(address, functioncode = functioncode, number_of_decimals = sensor['decimals'] if 'decimals' in sensor else 0)
                     else:
                         value = callback(address, functioncode = functioncode)
-                    data = Point("sensori").tag("slave", str(slave['address'])).tag("sensor", str(sensor['address'])).field("value", value)
+                    data = Point("sensori").tag("slave", str(slave['info']['address'])).tag("sensor", str(sensor['address'])).field("value", value)
                     self.write_api.write(org = "Link", bucket = "sensors", record = data, write_precision = 's')
                     self.write_api.close()
                 except Exception as e:
