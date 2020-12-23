@@ -1,7 +1,9 @@
 """
 Versione per la demo che gestisce un singolo dispositivo.
 """
-import os, stat, threading, minimalmodbus, serial, json, sched, time, pymongo, datetime
+import os, stat, threading, minimalmodbus, serial, json, sched, time, datetime, atexit
+from influxdb_client import InfluxDBClient, Point, WriteOptions
+from influxdb_client.client.write_api import SYNCHRONOUS
 
 DEBUG = True
 CONF_FILE = './config_file.json'
@@ -17,12 +19,9 @@ TIME_OUT_READ = 3
 TIME_OUT_WRITE = 5
 CLOSE_PORT_AFTER_EACH_CALL = False
 
-#MongoDB consts
 REFRESH_RATE = 5 #seconds
-DB_HOST  = ''
-DB_PORT = ''
-DB_NAME = 'link'
-COLLECTION_NAME = 'sensors'
+
+
 
 #Pipe consts
 PIPE_NAME = 'write_pipe'
@@ -56,7 +55,7 @@ class Handler:
     - Se è riuscito ad aprire un numero di connessioni diverse da 0, inizia il processo di refresh.
     - Configura una pipe con cui cominicare con Express.
     """
-    def __init__(self, slaves, mode, baudrate, bytesize, stop_bits, time_out_read, time_out_write, close_port_after_each_call, debug, refresh_rate):
+    def __init__(self, slaves):
         #Se nel file di configurazione non vi è elencato nessuno slave chiudo il programma.
         if len(slaves) == 0:
             print('La lista degli slave è vuota.\nControllare il contenuto del file:{}'.format(CONFIG_FILE))
@@ -68,22 +67,21 @@ class Handler:
                 print("Errore di configurazione in uno degli slave! Controllare {}!".format(CONFIG_FILE))
                 continue
             try:
-                self.slave_instances.append({'instance' : minimalmodbus.Instrument(SERIAL_PORT, slave['address'], mode = mode, close_port_after_each_call = close_port_after_each_call, debug = debug), 'info' : slave})
+                self.slave_instances.append({'instance' : minimalmodbus.Instrument(SERIAL_PORT, slave['address'], mode = MODE, close_port_after_each_call = CLOSE_PORT_AFTER_EACH_CALL, debug = DEBUG), 'info' : slave})
                 index = len(self.slave_instances) - 1
                 self.slave_instances[index]['instance'].serial.baudrate = BAUDRATE
                 self.slave_instances[index]['instance'].serial.parity = PARITY
                 self.slave_instances[index]['instance'].serial.bytesize = BYTESIZE
                 self.slave_instances[index]['instance'].serial.stopbits = STOP_BITS
-                self.slave_instances[index]['instance'].serial.timeout = time_out_read
-                self.slave_instances[index]['instance'].serial.write_timeout = time_out_write
+                self.slave_instances[index]['instance'].serial.timeout = TIME_OUT_READ
+                self.slave_instances[index]['instance'].serial.write_timeout = TIME_OUT_WRITE
             except Exception as e:
                 print('Qualcosa è andato storto mentre cercavo di aprire una connessione con lo slave {}:{}'.format(slave['address'], str(e)))
         if len(self.slave_instances) == 0:
             print("L'apertura della connessione è fallita con tutti gli slave presenti nel file di configurazione.\nTermino il processo.")
             exit()
         
-        self.get_mongo()
-        self.get_pipe()
+        self.get_influx()
         """
         Se si è arrivati fin qui abbiamo almeno uno slave con cui comunicare, dunque comincio il processo di refresh.
         """
@@ -97,7 +95,6 @@ class Handler:
         for slave in self.slave_instances:
             for sensor in slave['info']['map']:
                 #Se il sensore non deve essere aggiornato salto.
-                print('Sto scrivendo:{}'.format(sensor['name']))
                 if sensor['to_update'] == 0:
                     continue
                 if not self.check_fields(sensor, True):
@@ -108,32 +105,12 @@ class Handler:
                         value = callback(address, functioncode = functioncode, number_of_decimals = sensor['decimals'] if 'decimals' in sensor else 0)
                     else:
                         value = callback(address, functioncode = functioncode)
-                    if 'sensors' not in post:
-                        post = {
-                            'date' : datetime.datetime.utcnow(),
-                            'slave' : slave['info']['address'],
-                            'sensors' : [
-                                {
-                                'name' : sensor['name'],
-                                'address' : sensor['address'],
-                                'type' : sensor['type'],
-                                'um' : sensor['um'],
-                                'value' : value
-                                }
-                                ],
-                        }
-                    else:
-                        post['sensors'].append({
-                            'name' : sensor['name'],
-                            'address' : sensor['address'],
-                            'type' : sensor['type'],
-                            'um' : sensor['um'],
-                            'value' : value
-                        })
+                    data = Point("sensori").tag("slave", str(slave['address'])).tag("sensor", str(sensor['address'])).field("value", value)
+                    self.write_api.write(org = "Link", bucket = "sensors", record = data, write_precision = 's')
+                    self.write_api.flush()
                 except Exception as e:
                     print("Qualcosa è andato storto durante la lettura di {} da {}:{}".format(sensor['address'], slave['info']['address'], str(e)))
-        self.collection.insert_one(post)
-        scheduler.enter(5, 1, self.refresh_values)
+        scheduler.enter(REFRESH_RATE, 1, self.refresh_values)
         scheduler.run()
         
     """
@@ -159,59 +136,14 @@ class Handler:
             callback = slave['instance'].read_bit
             
         return address, functioncode, callback
-        
-    """
-    Cerca di aprire una connesione con MongoDB.
-    """
-    def get_mongo(self):
-        try:
-            if DB_HOST == '' and DB_PORT == '':
-                client = pymongo.MongoClient()
-            else:
-                client = pymongo.MongoClient(DB_HOST, DB_PORT)
-        except pymongo.ConnectionFailure as e:
-            print('Qualcosa è andato storto nella connessione con il database:{}'.format(str(e)))
-            exit()
-        self.db = client[DB_NAME]
-        self.collection = self.db[COLLECTION_NAME]
 
     """
-    Apre una named-pipe con il server node.
+    Stabilisce una connessione con il Influx.
+    Per il momento non controllo che la connessione vada a buon fine.
     """
-    def get_pipe(self):
-        print('Genero il thread che gestisce la pipe...')
-        t = threading.Thread(target = self.handle_pipe, args=())
-        t.daemon = True
-        t.start()
-
-    def handle_pipe(self):
-        if not stat.S_ISFIFO(os.stat(PIPE_NAME).st_mode):
-            # Creo la pipe
-            try:
-                os.mkfifo(PIPE_NAME)
-            except Exception as e:
-                print("Qualcosa è andato storto nell'apertura della pipe:{}".format(e))
-
-        while True:
-            try:
-                fifo = open(PIPE_NAME, 'r')
-                while True:
-                    data = fifo.read()
-                    if len(data) == 0:
-                        break
-                    """
-                    Data: slave_address,coil_address,value
-                    """
-                    decoded_data = data.split(',')
-                    try:
-                        slave = minimalmodbus.Instrument(SERIAL_PORT, int(decoded_data[0]))
-                        slave.write_bit(int(decoded_data[1]), int(decoded_data[2]), functioncode=5)
-                        print("Scrittura riuscita!")
-                    except Exception as e:
-                        print("Qualcosa è andato storto durante la scrittura su uno slave modbus:{}".format(str(e)))
-
-            except Exception:
-                print("Qualcosa è andato storto durante l'apertura della pipe!")
+    def get_influx(self):
+        client = InfluxDBClient(url = "http://localhost:8086", token = "KA9HI3YXW5HOS3jOsjkHOqprBLYBQnY0cJJMnFKeXOOvflqUPBVdax4NOHuiIBTFk2dvxxcChrfvosjJ1XEMVw==", org = "Link", debug = True)
+        self.write_api = client.write_api(write_options = SYNCHRONOUS)
 
     """
     Controllo se il file di configurazione ha tutti i campi necessari per la scrittura sul database.
@@ -231,4 +163,4 @@ class Handler:
                     return False
         return True
 
-Handler(SLAVES, MODE, BAUDRATE, BYTESIZE, STOP_BITS, TIME_OUT_READ, TIME_OUT_WRITE, CLOSE_PORT_AFTER_EACH_CALL, DEBUG, REFRESH_RATE)
+Handler(SLAVES)
