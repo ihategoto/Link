@@ -60,7 +60,6 @@ class Handler:
         if len(slaves) == 0:
             print('La lista degli slave è vuota.\nControllare il contenuto del file:{}'.format(CONFIG_FILE))
             exit()
-        self.refresh_rate = refresh_rate
         self.slave_instances = []
         for slave in slaves:
             if not self.check_fields(slave, False):
