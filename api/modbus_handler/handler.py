@@ -6,7 +6,7 @@ from influxdb_client import InfluxDBClient, Point, WriteOptions
 from influxdb_client.client.write_api import SYNCHRONOUS
 
 DEBUG = True
-CONF_FILE = 'modbus_handler/config_file.json'
+CONF_FILE = '~/Link/api/modbus_handler/config_file.json'
 
 #MODBUS consts
 SERIAL_PORT = '/dev/ttyS0'
