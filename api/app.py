@@ -5,7 +5,7 @@ class App(object):
         self.start = start_r
 
     def __iter__(self):
-        repr(self.env)
+        print(repr(self.env), flush=True)
         response_headers = [('Content-type', 'text/plain')]
         self.start('200 OK', response_headers)
         yield bytes('Hello world!\n', 'latin-1')
