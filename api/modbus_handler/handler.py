@@ -164,6 +164,9 @@ class Handler:
     """
     @staticmethod
     def write(slave, sensor, value, decimals = 0):
+        slave = int(slave)
+        sensor = int(sensor)
+        value = int(value)
         try:
             s = minimalmodbus.Instrument(SERIAL_PORT, slave, mode = MODE, close_port_after_each_call = CLOSE_PORT_AFTER_EACH_CALL, debug = DEBUG)
         except Exception:
