@@ -45,17 +45,12 @@ scheduler = sched.scheduler(time.time, time.sleep)
 MANDATORY_FIELDS_SENSOR = ['name', 'address', 'type', 'um']
 MANDATORY_FIELDS_SLAVE = ['address', ]
 
-
+class InvalidRegister(minimalmodbus.ModbusException):
+    pass
 
 class Handler:
-    """
-    Il costruttore ha diversi compiti:
-    
-    - Prova ad aprire una connessione con tutti gli slave rilevati nel file di configurazione.
-    - Se è riuscito ad aprire un numero di connessioni diverse da 0, inizia il processo di refresh.
-    """
     def __init__(self, slaves):
-        #Se nel file di configurazione non vi è elencato nessuno slave chiudo il programma.
+        #Se nel file di configurazione non vi è elencato nessuno slave chiudo il processo.
         if len(slaves) == 0:
             print('La lista degli slave è vuota.\nControllare il contenuto del file:{}'.format(CONFIG_FILE))
             exit()
@@ -110,6 +105,9 @@ class Handler:
         
     """
     Ritorna l'indirizzo relativo, il functioncode adatto al sensore e la funzione corretta di minimalmodbus.
+    
+    - slave: dict contenente tutte le informazioni riguardanti il sensore di cui si vuole scrivere sul database.
+    - sensor: dict contenente sia l'oggetto minimalmodbus.Instrument che i metadati inerenti allo slave.
     """
     def get_call_info(self, slave, sensor):
         if sensor['type'] == BIT:
@@ -133,8 +131,7 @@ class Handler:
         return address, functioncode, callback
 
     """
-    Stabilisce una connessione con il Influx.
-    Per il momento non controllo che la connessione vada a buon fine.
+    Stabilisce una connessione con il server Influx.
     """
     def get_influx(self):
         try:
@@ -161,6 +158,33 @@ class Handler:
                     return False
         return True
 
+    """
+    Metodo statico utilizzato per scrivere su un sensore attraverso modbus.
+    Non avendo particolari informazioni riguardanti il sensore stesso, si dovranno effettuare tutti
+    i controlli del caso per verificare la buona riuscita dell'operazione.
+    """
+    @staticmethod
+    def write(slave, sensor, value, decimals = 0):
+        try:
+            s = minimalmodbus.Instrument(SERIAL_PORT, slave, mode = MODE, close_port_after_each_call = CLOSE_PORT_AFTER_EACH_CALL, debug = DEBUG)
+        except Exception:
+            raise
+        if sensor >= 0 and sensor <= 9998:
+            #Coil
+            if value != 0 and value != 1 and value is not True and value is not False:
+                raise ValueError("Dati non validi per una coil!")
+            try:
+                s.write_bit(sensor, value)
+            except Exception :
+                raise
+        elif sensor >= 40000 and sensor <= 49998:
+            #Holding register
+            try:
+                s.write_register(sensor, value, number_of_decimals = decimals)
+            except Exception:
+                raise
+        else:
+            raise InvalidRegister
 
 class RefreshThread(object):
 
