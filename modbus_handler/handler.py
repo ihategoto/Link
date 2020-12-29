@@ -21,11 +21,11 @@ CLOSE_PORT_AFTER_EACH_CALL = False
 
 REFRESH_RATE = 5 #seconds
 
-
-
-#Pipe consts
-PIPE_NAME = 'write_pipe'
-EXIT_ON_ERROR_PIPE = True
+#InfluxDB
+URL_INFLUX = "http://localhost:8086"
+TOKEN_INFLUX = "KA9HI3YXW5HOS3jOsjkHOqprBLYBQnY0cJJMnFKeXOOvflqUPBVdax4NOHuiIBTFk2dvxxcChrfvosjJ1XEMVw=="
+ORGANIZATION_INFLUX = "Link"
+BUCKET_INFLUX = "sensors"
 
 #MODBUS data types
 BIT = 0
@@ -53,7 +53,6 @@ class Handler:
     
     - Prova ad aprire una connessione con tutti gli slave rilevati nel file di configurazione.
     - Se è riuscito ad aprire un numero di connessioni diverse da 0, inizia il processo di refresh.
-    - Configura una pipe con cui cominicare con Express.
     """
     def __init__(self, slaves):
         #Se nel file di configurazione non vi è elencato nessuno slave chiudo il programma.
@@ -81,25 +80,19 @@ class Handler:
             exit()
         
         self.get_influx()
-        """
-        Se si è arrivati fin qui abbiamo almeno uno slave con cui comunicare, dunque comincio il processo di refresh.
-        """
-        self.refresh_values()
         
     """
     Fa il refresh dei valori presenti in ogni slave classificato come 'to_update' : 1.
     """
     def refresh_values(self):
-        post = {}
         for slave in self.slave_instances:
             for sensor in slave['info']['map']:
                 #Se il sensore non deve essere aggiornato salto.
                 if sensor['to_update'] == 0:
                     continue
-                """
                 if not self.check_fields(sensor, True):
                     print('Errore di configurazione di un sensore appartenente allo slave {}! Salto la scrittura sul database.'.format(slave['info']['address']))
-                """
+                    continue                
                 address, functioncode, callback = self.get_call_info(slave, sensor)
                 try:
                     """
@@ -109,13 +102,11 @@ class Handler:
                         value = callback(address, functioncode = functioncode)
                     """
                     value = random.randrange(0, 1000)
-                    data = Point("sensori").tag("slave", str(slave['info']['address'])).tag("sensor", str(sensor['address'])).field("value", value)
-                    self.write_api.write(org = "Link", bucket = "sensors", record = data, write_precision = 's')
+                    data = Point("sensori").tag("slave", str(slave['info']['address'])).tag("sensor", str(sensor['address'])).field("value", value).field("um", sensor['um'])
+                    self.write_api.write(org = ORGANIZATION_INFLUX, bucket = BUCKET_INFLUX, record = data, write_precision = 's')
                     self.write_api.close()
                 except Exception as e:
                     print("Qualcosa è andato storto durante la lettura di {} da {}:{}".format(sensor['address'], slave['info']['address'], str(e)))
-        scheduler.enter(REFRESH_RATE, 1, self.refresh_values)
-        scheduler.run()
         
     """
     Ritorna l'indirizzo relativo, il functioncode adatto al sensore e la funzione corretta di minimalmodbus.
@@ -146,7 +137,10 @@ class Handler:
     Per il momento non controllo che la connessione vada a buon fine.
     """
     def get_influx(self):
-        client = InfluxDBClient(url = "http://localhost:8086", token = "KA9HI3YXW5HOS3jOsjkHOqprBLYBQnY0cJJMnFKeXOOvflqUPBVdax4NOHuiIBTFk2dvxxcChrfvosjJ1XEMVw==", org = "Link", debug = True)
+        try:
+            client = InfluxDBClient(url = URL_INFLUX, token = TOKEN_INFLUX, org = ORGANIZATION_INFLUX, debug = DEBUG)
+        except Exception as e:
+            print("Qualcosa è andato storto durante l'apertura della connessione con InfluxDB: {}".format(str(e)))
         self.write_api = client.write_api(write_options = SYNCHRONOUS)
 
     """
@@ -167,4 +161,21 @@ class Handler:
                     return False
         return True
 
-Handler(SLAVES)
+
+class RefreshThread(object):
+
+    def __init__(self, instance):
+        self.instance = instance
+        thread = threading.Thread(target = self.run, args = ())
+        thread.daemon = True
+        thread.start()
+
+    def run(self):
+        while True:
+            now = int(time.time())
+            self.instance.refresh_values()
+            time.sleep(5-(int(time.time())-now) if 5-(int(time.time())-now) >= 0 else 0)
+
+
+h = Handler(SLAVES)
+RefreshThread(h)
