@@ -13,5 +13,5 @@ class App(object):
         data = urllib.parse.parse_qs(self.env['QUERY_STRING'])
         print(repr(data), flush=True)
         self.start("200 OK", [('Content-Type','text/plain')])
-        yield bytes("OK.", "latin-1")
+        yield bytes("OK.\n", "latin-1")
         
