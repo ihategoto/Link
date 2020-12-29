@@ -12,4 +12,6 @@ class App(object):
             yield bytes("GET only method allowed!", "latin-1")
         data = urllib.parse.parse_qs(self.env['QUERY_STRING'])
         print(repr(data), flush=True)
+        self.start("200 OK", [('Content-Type','text/plain')])
+        yield bytes("OK.", "latin-1")
         
