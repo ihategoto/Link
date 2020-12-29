@@ -167,7 +167,7 @@ class RefreshThread(object):
     def __init__(self, instance):
         self.instance = instance
         thread = threading.Thread(target = self.run, args = ())
-        thread.daemon = False
+        thread.daemon = True
         thread.start()
 
     def run(self):
