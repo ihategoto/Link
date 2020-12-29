@@ -199,6 +199,6 @@ class RefreshThread(object):
             self.instance.refresh_values()
             time.sleep(5-(int(time.time())-now) if 5-(int(time.time())-now) >= 0 else 0)
 
-
-h = Handler()
-RefreshThread(h)
+if __name__ == "__main__":
+    h = Handler()
+    RefreshThread(h)
