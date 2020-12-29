@@ -38,8 +38,6 @@ def get_slaves():
         d = json.load(f)
     return d
 
-SLAVES = get_slaves()
-
 scheduler = sched.scheduler(time.time, time.sleep)
 
 MANDATORY_FIELDS_SENSOR = ['name', 'address', 'type', 'um']
@@ -49,7 +47,8 @@ class InvalidRegister(minimalmodbus.ModbusException):
     pass
 
 class Handler:
-    def __init__(self, slaves):
+    def __init__(self):
+        slaves = get_slaves()
         #Se nel file di configurazione non vi è elencato nessuno slave chiudo il processo.
         if len(slaves) == 0:
             print('La lista degli slave è vuota.\nControllare il contenuto del file:{}'.format(CONFIG_FILE))
@@ -201,5 +200,5 @@ class RefreshThread(object):
             time.sleep(5-(int(time.time())-now) if 5-(int(time.time())-now) >= 0 else 0)
 
 
-h = Handler(SLAVES)
+h = Handler()
 RefreshThread(h)
