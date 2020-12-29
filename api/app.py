@@ -1,4 +1,4 @@
-from ..modbus_handler.handler import Handler, InvalidRegister
+from .modbus_handler.handler import Handler, InvalidRegister
 import urllib
 
 class App(object):
