@@ -169,6 +169,12 @@ class Handler:
         value = int(value)
         try:
             s = minimalmodbus.Instrument(SERIAL_PORT, slave, mode = MODE, close_port_after_each_call = CLOSE_PORT_AFTER_EACH_CALL, debug = DEBUG)
+            s.serial.baudrate = BAUDRATE
+            s.serial.parity = PARITY
+            s.serial.bytesize = BYTESIZE
+            s.serial.stopbits = STOP_BITS
+            s.serial.timeout = TIME_OUT_READ
+            s.serial.write_timeout = TIME_OUT_WRITE
         except Exception:
             raise
         if sensor >= 0 and sensor <= 9998:
