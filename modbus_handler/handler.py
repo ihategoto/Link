@@ -1,7 +1,7 @@
-import os, threading, minimalmodbus, serial, json, time, datetime, atexit
+import os, threading, minimalmodbus, serial, json, time, datetime, atexit, logging
 from pystalk import BeanstalkClient, BeanstalkError
 
-DEBUG = True
+DEBUG = False
 CONF_FILE = 'config_file.json'
 DAEMON_LOG_FILE = "daemon.log"
 
@@ -157,6 +157,14 @@ class Handler:
     Metodo statico utilizzato per scrivere su un sensore attraverso modbus.
     Non avendo particolari informazioni riguardanti il sensore stesso, si dovranno effettuare tutti
     i controlli del caso per verificare la buona riuscita dell'operazione.
+
+    Parametri:
+    - slave: indirizzo dello slave.
+    - sensor: indirizzo del sensore.
+    - value: valore da scrivere sul sensore.
+    - decimals: numero di decimali con cui scrivere il valore.
+
+    Raises: ValueError, TypeError, serial.SerialException, minimalmodbus.ModbusException, InvalidRegister
     """
     @staticmethod
     def write(slave, sensor, value, decimals = 0):
@@ -171,21 +179,19 @@ class Handler:
             s.serial.stopbits = STOP_BITS
             s.serial.timeout = TIME_OUT_READ
             s.serial.write_timeout = TIME_OUT_WRITE
-        except Exception:
+        except (ValueError, serial.SerialException):
             raise
         if sensor >= 0 and sensor <= 9998:
             #Coil
-            if value != 0 and value != 1 and value is not True and value is not False:
-                raise ValueError("Dati non validi per una coil!")
             try:
                 s.write_bit(sensor, value)
-            except Exception :
+            except (TypeError, ValueError, minimalmodbus.ModbusException, serial.SerialException):
                 raise
         elif sensor >= 40000 and sensor <= 49998:
             #Holding register
             try:
                 s.write_register(sensor, value, number_of_decimals = decimals)
-            except Exception:
+            except (TypeError, ValueError, minimalmodbus.ModbusException, serial.SerialException):
                 raise
         else:
             raise InvalidRegister
@@ -207,7 +213,6 @@ class RefreshThread(object):
 class WriteDaemon(object):
 
     def __init__(self, instance):
-        self.instance = instance
         thread = threading.Thread(target = self.run, args = ())
         thread.daemon = True
         thread.start()
@@ -220,13 +225,28 @@ class WriteDaemon(object):
             print("Impossibile inserire nella watchlist la tube '{}': {}".format(INPUT_TUBE, e))
 
         while True:
-            with open(DAEMON_LOG_FILE, "a") as f:
-                for job in client.reserve_iter():
-                    data = job.job_data
-                    client.delete_job(job.job_id)
-                    f.write("{}\n".format(json.loads(data)))
+            for job in client.reserve_iter():
+                data = job.job_data
+                client.delete_job(job.job_id)
+                try:
+                    decoded_data = json.loads(data)
+                    Handler.write(data['slave'], data['sensor'], data['value'])
+                except json.JSONDecodeError as e:
+                    print("Impossibile decodificare il comando {}: {} ".format(data, e))
+                except KeyError as e:
+                    print("Il formato del comando non è valido: {}".format(e))
+                except ValueError as e:
+                    print("Valore non valido: {}".format(e))
+                except TypeError as e:
+                    print("Tipo non valido: {}".format(e))
+                except serial.SerialException as e:
+                    print("Errore della linea seriale: {}".format(e))
+                except minimalmodbus.ModbusException as e:
+                    print("Errore nel protocollo Modbus: {}".format(e))
+                except InvalidRegister as e:
+                    print("Indirizzo del registro non valido.")
 
 if __name__ == "__main__":
     h = Handler()
     RefreshThread(h)
-    WriteDaemon(h)
+    WriteDaemon()
