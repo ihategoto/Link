@@ -92,7 +92,7 @@ class Handler:
                         value = callback(address, functioncode = functioncode)
                     data = {'slave_id' : slave['info']['address'], 'sensor_id' : sensor['address'], 'timestamp' : time.time(), "value" : value}
                     self.client.put_job(json.dumps(data))
-                except (ValueError, TypeError, minimalmodbus.ModbusException, pyserial.SerialException) as e:
+                except (ValueError, TypeError, minimalmodbus.ModbusException, serial.SerialException) as e:
                     print("Qualcosa è andato storto durante la lettura di {} da {}:{}".format(sensor['address'], slave['info']['address'], e))
                 except BeanstalkError as e:
                     print("Impossibile scrivere sul server BeansTalk il contenuto del sensore {} dello slave {}: {}".format(sensor['address'], slave['info']['address'], e))
