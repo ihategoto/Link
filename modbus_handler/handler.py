@@ -2,7 +2,7 @@ import os, threading, minimalmodbus, serial, json, time, datetime, atexit
 from pystalk import BeanstalkClient, BeanstalkError
 
 DEBUG = True
-CONF_FILE = '~/Link/api/modbus_handler/config_file.json'
+CONF_FILE = '~/Link/modbus_handler/config_file.json'
 
 #MODBUS consts
 SERIAL_PORT = '/dev/ttyS0'
