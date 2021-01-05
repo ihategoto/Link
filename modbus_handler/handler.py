@@ -224,7 +224,7 @@ class WriteDaemon(object):
                 for job in client.reserve_iter():
                     data = job.job_data
                     client.delete_job(job.job_id)
-                    f.write("{}".format(json.loads(data)))
+                    f.write("{}\n".format(json.loads(data)))
 
 if __name__ == "__main__":
     h = Handler()
