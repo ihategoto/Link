@@ -214,17 +214,17 @@ class WriteDaemon(object):
 
     def run(self):
         client = BeanstalkClient(BEANSTALKD_HOST, BEANSTALKD_PORT)
+        f = open(DAEMON_LOG_FILE, "w")
         try:
             client.watch(INPUT_TUBE)
         except BeanstalkError as e:
             print("Impossibile inserire nella watchlist la tube '{}': {}".format(INPUT_TUBE, e))
-        
-        with open(DAEMON_LOG_FILE, "w") as f:
-            while True:
-                    for job in client.reserve_iter():
-                        data = job.job_data
-                        client.delete_job(job.job_id)
-                        f.write("{}\n".format(json.loads(data)))
+            
+        while True:
+                for job in client.reserve_iter():
+                    data = job.job_data
+                    client.delete_job(job.job_id)
+                    f.write("{}\n".format(json.loads(data)))
 
 if __name__ == "__main__":
     h = Handler()
