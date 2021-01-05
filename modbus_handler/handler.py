@@ -212,7 +212,7 @@ class RefreshThread(object):
 
 class WriteDaemon(object):
 
-    def __init__(self, instance):
+    def __init__(self):
         thread = threading.Thread(target = self.run, args = ())
         thread.daemon = True
         thread.start()
