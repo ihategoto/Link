@@ -34,8 +34,6 @@ def get_slaves():
         d = json.load(f)
     return d
 
-scheduler = sched.scheduler(time.time, time.sleep)
-
 MANDATORY_FIELDS_SENSOR = ['name', 'address', 'type', 'um']
 MANDATORY_FIELDS_SLAVE = ['address', ]
 
