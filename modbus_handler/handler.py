@@ -220,8 +220,8 @@ class WriteDaemon(object):
             print("Impossibile inserire nella watchlist la tube '{}': {}".format(INPUT_TUBE, e))
 
         while True:
-            for job in client.reserve_iter():
-                with open(DAEMON_LOG_FILE, "a") as f:
+            with open(DAEMON_LOG_FILE, "a") as f:
+                for job in client.reserve_iter():
                     data = job.job_data
                     client.delete_job(job.job_id)
                     f.write("{}\n".format(json.loads(data)))
