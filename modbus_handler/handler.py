@@ -1,9 +1,5 @@
-"""
-Versione per la demo che gestisce un singolo dispositivo.
-"""
-import os, stat, threading, minimalmodbus, serial, json, sched, time, datetime, atexit, random
-from influxdb_client import InfluxDBClient, Point, WriteOptions
-from influxdb_client.client.write_api import SYNCHRONOUS
+import os, threading, minimalmodbus, serial, json, time, datetime, atexit
+from pystalk import BeanstalkClient, BeanstalkError
 
 DEBUG = True
 CONF_FILE = '~/Link/api/modbus_handler/config_file.json'
@@ -21,11 +17,11 @@ CLOSE_PORT_AFTER_EACH_CALL = False
 
 REFRESH_RATE = 5 #seconds
 
-#InfluxDB
-URL_INFLUX = "http://localhost:8086"
-TOKEN_INFLUX = "KA9HI3YXW5HOS3jOsjkHOqprBLYBQnY0cJJMnFKeXOOvflqUPBVdax4NOHuiIBTFk2dvxxcChrfvosjJ1XEMVw=="
-ORGANIZATION_INFLUX = "Link"
-BUCKET_INFLUX = "sensors"
+#BEANSTALKD consts
+BEANSTALKD_HOST = '127.0.0.1'
+BEANSTALKD_PORT = 11300
+OUTPUT_TUBE = 'data'
+INPUT_TUBE = 'commands'
 
 #MODBUS data types
 BIT = 0
@@ -42,6 +38,9 @@ scheduler = sched.scheduler(time.time, time.sleep)
 
 MANDATORY_FIELDS_SENSOR = ['name', 'address', 'type', 'um']
 MANDATORY_FIELDS_SLAVE = ['address', ]
+
+class InvalidValue(ValueError):
+    pass
 
 class InvalidRegister(minimalmodbus.ModbusException):
     pass
@@ -73,7 +72,7 @@ class Handler:
             print("L'apertura della connessione è fallita con tutti gli slave presenti nel file di configurazione.\nTermino il processo.")
             exit()
         
-        self.get_influx()
+        self.get_beanstalk()
         
     """
     Fa il refresh dei valori presenti in ogni slave classificato come 'to_update' : 1.
@@ -89,19 +88,16 @@ class Handler:
                     continue                
                 address, functioncode, callback = self.get_call_info(slave, sensor)
                 try:
-                    """
                     if sensor['type'] == HOLDING_REGISTER or sensor['type'] == INPUT_REGISTER:
                         value = callback(address, functioncode = functioncode, number_of_decimals = sensor['decimals'] if 'decimals' in sensor else 0)
                     else:
                         value = callback(address, functioncode = functioncode)
-                    """
-                    value = random.randrange(0, 1000)
-                    data = Point("sensori").tag("slave", str(slave['info']['address'])).tag("sensor", str(sensor['address'])).field("value", value).field("um", sensor['um'])
-                    self.write_api.write(org = ORGANIZATION_INFLUX, bucket = BUCKET_INFLUX, record = data, write_precision = 's')
-                    self.write_api.close()
-                except Exception as e:
-                    print("Qualcosa è andato storto durante la lettura di {} da {}:{}".format(sensor['address'], slave['info']['address'], str(e)))
-        
+                    data = {'slave_id' : slave['info']['address'], 'sensor_id' : sensor['address'], 'timestamp' : time.time(), "value" : value}
+                    self.client.put_job(json.dumps(data))
+                except (ValueError, TypeError, minimalmodbus.ModbusException, pyserial.SerialException) as e:
+                    print("Qualcosa è andato storto durante la lettura di {} da {}:{}".format(sensor['address'], slave['info']['address'], e))
+                except BeanstalkError as e:
+                    print("Impossibile scrivere sul server BeansTalk il contenuto del sensore {} dello slave {}: {}".format(sensor['address'], slave['info']['address'], e))
     """
     Ritorna l'indirizzo relativo, il functioncode adatto al sensore e la funzione corretta di minimalmodbus.
     
@@ -130,16 +126,6 @@ class Handler:
         return address, functioncode, callback
 
     """
-    Stabilisce una connessione con il server Influx.
-    """
-    def get_influx(self):
-        try:
-            client = InfluxDBClient(url = URL_INFLUX, token = TOKEN_INFLUX, org = ORGANIZATION_INFLUX, debug = DEBUG)
-        except Exception as e:
-            print("Qualcosa è andato storto durante l'apertura della connessione con InfluxDB: {}".format(str(e)))
-        self.write_api = client.write_api(write_options = SYNCHRONOUS)
-
-    """
     Controllo se il file di configurazione ha tutti i campi necessari per la scrittura sul database.
     Parametri:
 
@@ -156,6 +142,17 @@ class Handler:
                 if field not in obj:
                     return False
         return True
+
+    """
+    Stabilisco una connessione con il server beanstalkd.
+    """
+    def get_beanstalk(self):
+        self.client = BeanstalkClient(BEANSTALKD_HOST, BEANSTALKD_PORT)
+        try:
+            self.client.use(OUTPUT_TUBE)
+        except BeanstalkError as e:
+            print("Impossibile utilizzare la tube: {}!".format(e.message))
+            exit()
 
     """
     Metodo statico utilizzato per scrivere su un sensore attraverso modbus.
@@ -206,7 +203,32 @@ class RefreshThread(object):
         while True:
             now = int(time.time())
             self.instance.refresh_values()
-            time.sleep(5-(int(time.time())-now) if 5-(int(time.time())-now) >= 0 else 0)
+            time.sleep(REFRESH_RATE-(int(time.time())-now) if REFRESH_RATE-(int(time.time())-now) >= 0 else 0)
+
+class WriteDaemon(object):
+
+    def __init__(self, instance):
+        self.instance = instance
+        thread = threading.Thread(target = self.run, args = ())
+        thread.daemon = True
+        thread.start()
+
+    def run(self):
+        client = BeanstalkClient(BEANSTALKD_HOST, BEANSTALKD_PORT)
+        try:
+            client.watch(INPUT_TUBE)
+        except BeanstalkError as e:
+            print("Impossibile inserire nella watchlist la tube '{}': {}".format(INPUT_TUBE, e))
+        
+        while True:
+            for job in client.reserve_iter():
+                data = job.job_data
+                client.delete_job(job.job_id)
+                printf("{}".format(json.load(data)))
+
+
+
+
 
 if __name__ == "__main__":
     h = Handler()
