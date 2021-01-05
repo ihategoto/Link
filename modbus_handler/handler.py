@@ -3,6 +3,7 @@ from pystalk import BeanstalkClient, BeanstalkError
 
 DEBUG = True
 CONF_FILE = 'config_file.json'
+DAEMON_LOG_FILE = "daemon.log"
 
 #MODBUS consts
 SERIAL_PORT = '/dev/ttyS0'
@@ -219,14 +220,11 @@ class WriteDaemon(object):
             print("Impossibile inserire nella watchlist la tube '{}': {}".format(INPUT_TUBE, e))
         
         while True:
-            for job in client.reserve_iter():
-                data = job.job_data
-                client.delete_job(job.job_id)
-                printf("{}".format(json.load(data)))
-
-
-
-
+            with open(DAEMON_LOG_FILE, "w") as f:
+                for job in client.reserve_iter():
+                    data = job.job_data
+                    client.delete_job(job.job_id)
+                    f.write("{}".format(json.load(data)))
 
 if __name__ == "__main__":
     h = Handler()
