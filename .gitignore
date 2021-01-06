@@ -1,6 +1,5 @@
 modbus_handler/.vscode
 modbus_handler/*.log
-./Pipfile
 .DS_store
 producer.py
 listener.py
