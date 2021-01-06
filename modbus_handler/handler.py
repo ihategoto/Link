@@ -35,7 +35,7 @@ def get_slaves():
         d = json.load(f)
     return d
 
-MANDATORY_FIELDS_SENSOR = ['name', 'address', 'type', 'um']
+MANDATORY_FIELDS_SENSOR = ['name', 'address', 'type']
 MANDATORY_FIELDS_SLAVE = ['address', ]
 
 class InvalidValue(ValueError):
@@ -65,8 +65,11 @@ class Handler:
                 self.slave_instances[index]['instance'].serial.stopbits = STOP_BITS
                 self.slave_instances[index]['instance'].serial.timeout = TIME_OUT_READ
                 self.slave_instances[index]['instance'].serial.write_timeout = TIME_OUT_WRITE
-            except Exception as e:
-                print('Qualcosa è andato storto mentre cercavo di aprire una connessione con lo slave {}:{}'.format(slave['address'], str(e)))
+            except ValueError as e:
+                print('Uno o più parametri indicati per la linea seriale non è valido:{}'.format(e))
+            except serial.SerialException as e:
+                print('Impossibile contattare lo slave {}: {}'.format(slave['address'], e))
+        
         if len(self.slave_instances) == 0:
             print("L'apertura della connessione è fallita con tutti gli slave presenti nel file di configurazione.\nTermino il processo.")
             exit()
@@ -93,15 +96,20 @@ class Handler:
                         value = callback(address, functioncode = functioncode)
                     data = {'slave_id' : slave['info']['address'], 'sensor_id' : sensor['address'], 'timestamp' : time.time(), "value" : value}
                     self.client.put_job(json.dumps(data))
-                except (ValueError, TypeError, minimalmodbus.ModbusException, serial.SerialException) as e:
+                except (ValueError, TypeError) as e:
                     print("Qualcosa è andato storto durante la lettura di {} da {}:{}".format(sensor['address'], slave['info']['address'], e))
+                except minimalmodbus.ModbusException as e:
+                    print("Errore MODBUS durante la lettura di {} da {}: {}".format(sensor['address'], slave['info']['address'], e))
                 except BeanstalkError as e:
                     print("Impossibile scrivere sul server BeansTalk il contenuto del sensore {} dello slave {}: {}".format(sensor['address'], slave['info']['address'], e))
+
     """
     Ritorna l'indirizzo relativo, il functioncode adatto al sensore e la funzione corretta di minimalmodbus.
     
     - slave: dict contenente tutte le informazioni riguardanti il sensore di cui si vuole scrivere sul database.
     - sensor: dict contenente sia l'oggetto minimalmodbus.Instrument che i metadati inerenti allo slave.
+    
+    Ritorna: indirizzo relativo del sensore, il functioncode per l'operazione richiesta e la funzione adeguata per eseguirla.
     """
     def get_call_info(self, slave, sensor):
         if sensor['type'] == BIT:
@@ -129,7 +137,9 @@ class Handler:
     Parametri:
 
     - obj: l'oggetto su cui controllare i campi.
-    - slave_or_sensor: flag che indica se i stanno controllando i campi di uno slave o di un sensore.
+    - slave_or_sensor: flag che indica se si stanno controllando i campi di uno slave o di un sensore.
+    
+    Ritorna True se l'oggetto contiene tutti campi necessari, False altrimenti.
     """
     def check_fields(self, obj, slave_or_sensor):
         if slave_or_sensor:
@@ -143,7 +153,8 @@ class Handler:
         return True
 
     """
-    Stabilisco una connessione con il server beanstalkd.
+    Stabilisco una connessione con il server beanstalkd, ed inserisco il producer nella tube indicata.
+    In caso di insuccesso termino il processo.
     """
     def get_beanstalk(self):
         self.client = BeanstalkClient(BEANSTALKD_HOST, BEANSTALKD_PORT)
