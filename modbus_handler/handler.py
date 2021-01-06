@@ -94,7 +94,7 @@ class Handler:
                         value = callback(address, functioncode = functioncode, number_of_decimals = sensor['decimals'] if 'decimals' in sensor else 0)
                     else:
                         value = callback(address, functioncode = functioncode)
-                    data = {'slave_id' : slave['info']['address'], 'sensor_id' : sensor['address'], 'timestamp' : time.time(), "value" : value}
+                    data = {'slave' : slave['info']['address'], 'sensor' : sensor['address'], 'timestamp' : time.time(), "value" : value}
                     self.client.put_job(json.dumps(data))
                 except (ValueError, TypeError) as e:
                     print("Qualcosa è andato storto durante la lettura di {} da {}:{}".format(sensor['address'], slave['info']['address'], e))
