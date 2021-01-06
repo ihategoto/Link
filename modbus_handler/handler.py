@@ -218,7 +218,7 @@ class WriteDaemon(object):
         thread.start()
 
     def run(self):
-        client = BeanstalkClient(BEANSTALKD_HOST, BEANSTALKD_PORT)
+        client = BeanstalkClient(BEANSTALKD_HOST, BEANSTALKD_PORT, auto_decode = True)
         try:
             client.watch(INPUT_TUBE)
         except BeanstalkError as e:
