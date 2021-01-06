@@ -15,7 +15,7 @@
             "address":30000,
             "to_update":1,
             "um":"ppm",
-            "decimals":"2"
+            "decimals":2
          },
          {
             "name":"val_eCO2",
