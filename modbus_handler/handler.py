@@ -1,7 +1,7 @@
 import os, threading, minimalmodbus, serial, json, time, datetime, atexit, logging
 from pystalk import BeanstalkClient, BeanstalkError
 
-DEBUG = True
+DEBUG = False
 CONF_FILE = 'config_file.json'
 DAEMON_LOG_FILE = "daemon.log"
 
