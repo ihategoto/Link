@@ -230,7 +230,7 @@ class WriteDaemon(object):
                 client.delete_job(job.job_id)
                 try:
                     decoded_data = json.loads(data)
-                    Handler.write(data['slave'], data['sensor'], data['value'])
+                    Handler.write(decoded_data['slave'], decoded_data['sensor'], decoded_data['value'])
                 except json.JSONDecodeError as e:
                     print("Impossibile decodificare il comando {}: {} ".format(data, e))
                 except KeyError as e:
