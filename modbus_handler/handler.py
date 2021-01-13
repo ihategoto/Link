@@ -201,7 +201,7 @@ class Handler:
         elif sensor >= 40000 and sensor <= 49998:
             #Holding register
             try:
-                s.write_register(sensor, value, number_of_decimals = decimals, functioncode=6)
+                s.write_register(sensor-40000, value, number_of_decimals = decimals, functioncode=6)
             except (TypeError, ValueError, minimalmodbus.ModbusException, serial.SerialException):
                 raise
         else:
