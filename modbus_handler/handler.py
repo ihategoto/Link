@@ -259,5 +259,5 @@ class WriteDaemon(object):
 
 if __name__ == "__main__":
     h = Handler()
-    RefreshThread(h)
+    #RefreshThread(h)
     WriteDaemon()
