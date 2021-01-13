@@ -217,10 +217,12 @@ class RefreshThread(object):
 
     def run(self):
         while True:
+            pass
+            """
             now = int(time.time())
             self.instance.refresh_values()
             time.sleep(REFRESH_RATE-(int(time.time())-now) if REFRESH_RATE-(int(time.time())-now) >= 0 else 0)
-
+            """
 class WriteDaemon(object):
 
     def __init__(self):
@@ -259,5 +261,5 @@ class WriteDaemon(object):
 
 if __name__ == "__main__":
     h = Handler()
-    #RefreshThread(h)
+    RefreshThread(h)
     WriteDaemon()
