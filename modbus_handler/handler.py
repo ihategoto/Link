@@ -6,7 +6,7 @@ CONF_FILE = 'config_file.json'
 DAEMON_LOG_FILE = "daemon.log"
 
 #MODBUS consts
-SERIAL_PORT = '/dev/ttyS0'
+SERIAL_PORT = '/dev/ttyUSB0'
 BAUDRATE = 9600
 BYTESIZE = 8
 PARITY = serial.PARITY_NONE
