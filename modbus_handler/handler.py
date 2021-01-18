@@ -35,18 +35,26 @@ def get_slaves():
         d = json.load(f)
     return d
 
-MANDATORY_FIELDS_SENSOR = ['name', 'address', 'type']
+MANDATORY_FIELDS_SENSOR = ['address', 'type']
 MANDATORY_FIELDS_SLAVE = ['address', ]
 
-class InvalidValue(ValueError):
-    pass
+mutex = threading.Lock()
 
 class InvalidRegister(minimalmodbus.ModbusException):
     pass
 
 class Handler:
+    """
+    Il costruttore importa il layout della rete MODBUS dal file di configurazione. 
+    Se non riesce ad aprire una connessione con nessuno degli slave, oppure il file di configurazione è mal formattato
+    termina il processo.
+    """
     def __init__(self):
+        try:
         slaves = get_slaves()
+        except json.JSONDecodeError as e:
+            print("Impossibile leggere il contenuto del file di configurazione {}: {}".format(CONF_FILE, e))
+            exit()
         #Se nel file di configurazione non vi è elencato nessuno slave chiudo il processo.
         if len(slaves) == 0:
             print('La lista degli slave è vuota.\nControllare il contenuto del file:{}'.format(CONFIG_FILE))
@@ -78,6 +86,8 @@ class Handler:
         
     """
     Fa il refresh dei valori presenti in ogni slave classificato come 'to_update' : 1.
+    Nel caso in cui un sensore non abbia sufficienti informazioni associate, la sua lettura viene saltata.
+    Le eventuali eccezioni vengono gestite all'interno del metodo.
     """
     def refresh_values(self):
         for slave in self.slave_instances:
@@ -102,7 +112,8 @@ class Handler:
                     print("Errore MODBUS durante la lettura di {} da {}: {}".format(sensor['address'], slave['info']['address'], e))
                 except BeanstalkError as e:
                     print("Impossibile scrivere sul server BeansTalk il contenuto del sensore {} dello slave {}: {}".format(sensor['address'], slave['info']['address'], e))
-
+            self.slave.serial.close()   #per dare la possibilità al daemon dei comandi di accedere agli slave.
+    
     """
     Ritorna l'indirizzo relativo, il functioncode adatto al sensore e la funzione corretta di minimalmodbus.
     
@@ -133,7 +144,7 @@ class Handler:
         return address, functioncode, callback
 
     """
-    Controllo se il file di configurazione ha tutti i campi necessari per la scrittura sul database.
+    Controllo se il file di configurazione ha tutti i campi necessari.
     Parametri:
 
     - obj: l'oggetto su cui controllare i campi.
@@ -217,8 +228,10 @@ class RefreshThread(object):
 
     def run(self):
         while True:
+            mutex.acquire()
             now = int(time.time())
             self.instance.refresh_values()
+            mutex.release()
             time.sleep(REFRESH_RATE-(int(time.time())-now) if REFRESH_RATE-(int(time.time())-now) >= 0 else 0)
 
 class WriteDaemon(object):
@@ -239,6 +252,7 @@ class WriteDaemon(object):
             for job in client.reserve_iter():
                 data = job.job_data
                 client.delete_job(job.job_id)
+                mutex.acquire()
                 try:
                     decoded_data = json.loads(data)
                     Handler.write(decoded_data['slave'], decoded_data['sensor'], decoded_data['value'])
@@ -256,6 +270,8 @@ class WriteDaemon(object):
                     print("Errore nel protocollo Modbus: {}".format(e))
                 except InvalidRegister as e:
                     print("Indirizzo del registro non valido.")
+                finally:
+                    mutex.release()
 
 if __name__ == "__main__":
     h = Handler()
