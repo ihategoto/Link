@@ -51,7 +51,7 @@ class Handler:
     """
     def __init__(self):
         try:
-        slaves = get_slaves()
+            slaves = get_slaves()
         except json.JSONDecodeError as e:
             print("Impossibile leggere il contenuto del file di configurazione {}: {}".format(CONF_FILE, e))
             exit()
