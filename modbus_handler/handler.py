@@ -1,4 +1,4 @@
-import os, threading, minimalmodbus, serial, json, time, datetime, atexit, logging
+import os, threading, minimalmodbus, serial, json, time, datetime, atexit, uuid
 from pystalk import BeanstalkClient, BeanstalkError
 
 DEBUG = False
@@ -21,6 +21,7 @@ REFRESH_RATE = 5 #seconds
 #BEANSTALKD consts
 BEANSTALKD_HOST = '127.0.0.1'
 BEANSTALKD_PORT = 11300
+SERVER_TUBE = 'driver'
 OUTPUT_TUBE = 'data'
 INPUT_TUBE = 'commands'
 
@@ -29,6 +30,9 @@ BIT = 0
 COIL = 1
 INPUT_REGISTER = 3
 HOLDING_REGISTER = 4
+
+#MODBUS SCANNER consts
+UPPER_BOUND_ADDRESS = 32
 
 def get_slaves():
     with open(CONF_FILE) as f:
@@ -40,14 +44,209 @@ MANDATORY_FIELDS_SLAVE = ['address', ]
 
 mutex = threading.Lock()
 
+"""
+Utilities
+"""
+# Controlla se gli elementi di una lista sono tutti numeri interi.
+def are_integers(l):
+    try:
+        for i in l:
+            s = str(i)
+            try:
+                int(s)
+            except ValueError:
+                return False
+        return True
+    except TypeError:
+        return False
+
+# Controlla se il variabile contiene una valore intero.        
+def is_integer(v):
+    s = str(v)
+    try:
+        int(s)
+        return True
+    except TypeError:
+        return False
+
+# Funzione per la stampa di messaggi di log.
+def print_log(class_name, msg):
+    print("{} {}:{}".format(class_name, time.strftime("%a %d/%m/%Y %H:%M:%S"), msg))
+
+"""
+Eccezioni personalizzate per la gestione del driver.
+"""
 class InvalidRegister(minimalmodbus.ModbusException):
     pass
 
+class InvalidCommand(ValueError):
+    pass
+
+"""
+La seguente funzione 
+"""
+def clean_up_processes(scanner_tube = None, handler_tube = None):
+    pass
+
+"""
+La classe 'Driver' soprintende e coordina l'azione delle due classi 'Handler' e 'Scanner'.
+"""
+class Driver(object):
+    self.scanning = False
+    self.scanning_mutex = threading.Lock()
+    self.retrieving = False
+    self.retrieving_mutex = threading.Lock()
+
+    """
+    Il costruttore deve creare un client beanstalk per poter comunicare con lo script di 
+    sincronizzazione locale.
+    """
+    def __init__(self):
+        print("\t***Driver attivato***")
+        self.client = BeanstalkClient(BEANSTALKD_HOST, BEANSTALKD_PORT, auto_decode = True)
+        try:
+            print_log("Driver", "'watch': {} .".format(SERVER_TUBE))
+            self.client.watch(SERVER_TUBE)
+        except BeanstalkError as e:
+            print_log("Driver", "'watch': {} - Fallito: {}".format(SERVER_TUBE, e))
+            self.driver_exit()
+        self.serve()
+
+    """
+    Si mette in ascolto sulla tube 'driver', ed esegue eventuali comandi.
+    """
+    def serve(self):
+        for job in self.client.reserve_iter():
+            data = job.data
+            client.delete_job(job.job_id)
+            print_log("Driver", "parsing del comando: {}".format(data))
+            try:
+                words =self._parse_command(data)
+            except InvalidCommand as e:
+                print_log("Driver", "comando '{}' non valido:{}".format(data,e))
+                continue
+            if words[0] == "scan":
+                scan(words)
+            else:
+                start(words)
+
+    def scan(self, parameters):
+        self.scanning_mutex.acquire()
+        if self.scanning:
+            print_log("Driver", "comando 'scan': processo di scanning ancora in corso.")
+            self.scanning_mutex.release()
+            return
+        self.scanning = True
+        self.scanning_mutex.release()
+        self.retrieving_mutex.acquire()
+        if self.retrieving:
+            #kill the thread
+            pass
+        else:
+            self.retrieving_mutex.release()
+        file_name = uuid.uuid4().hex
+        #avvia la fase di scanning
+
+    def start(self, parameters):
+        self.scanning_mutex.acquire()
+        if self.scanning:
+            print_log("Driver", "comando 'start': processo di scanning ancora in corso.")
+            self.scanning_mutex.release()
+            return
+        self.scanning_mutex.release()
+        self.retrieving_mutex.acquire()
+        if self.retrieving:
+            print_log("Driver", "comando 'start': processo di retrieving ancora in corso.")
+            self.retrieving_mutex.release()
+            return
+        self.retrieving = True
+        self.retrieving_mutex.release()
+        #avvia la fase di retrieving
+            
+
+    """
+    Il seguente metodo fa il parsing del comando arrivato sulla tube 'driver'.
+    I comandi ammessi sono riportati di seguito:
+
+    - scan [[start_address end_address], [address_list]]
+    - start data_tube command_tube config_file
+
+    Constraints:
+    - start_address, end_address: devono essere numeri interi maggiori di -1 e minori di UPPER_BOUND_ADDRESS.
+    - address_list: deve essere una stringa che inizia con '[' e che finisce con ']'. Gli elementi sono divisi
+                    da ',' e possono essere solo dei numeri interi maggiori di -1 e minori di UPPER_BOUND_ADDRESS.
+                    Non sono ammessi spazi.
+    - config_file: path assoluto di un file esistente.
+
+    Returns:
+    Il metodo ritorna una lista con gli oggetti nativi dei parametri.
+    """
+    def _parse_command(self, data):
+        if len(data) == 0:
+            raise InvalidCommand("la stringa ricevuta non contiene alcun carattere.")
+        
+        words = data.split()
+        if words[0] == "scan":
+            if len(words) == 2:
+                """
+                In questo caso il parametro deve essere una lista.
+                """
+                if words[1][0] != '[' or words[1][-1:] != ']':
+                    raise InvalidCommand("la stringa {} non è valida come lista.".format(words[1]))     
+                addresses = words[1].strip("[]").split(',')
+                try:
+                    addresses_int = [int(x) for x in addresses]
+                except ValueError:
+                    raise InvalidCommand("uno o più elementi della lista {} non sono indirizzi validi.".format(addresses))
+                if  min(addresses_int) < 0 or max(addresses_int) > UPPER_BOUND_ADDRESS:
+                    raise InvalidCommand("la lista {} contiene degli indirizzi al di fuori del range consentito.".format(addresses))
+                
+                return ["scan", [addresses_int, ]]
+            elif len(words) == 3:
+                """
+                In questo caso si devono trovare in words[1] e words[2] due numeri interi.
+                """
+                try:
+                    p1 = int(words[1])
+                    p2 = int(words[2])
+                except ValueError:
+                    raise InvalidCommand("il range di indirizzi specificato non è valido.")
+                
+                if p1 <= p2:
+                    raise InvalidCommand("l'indirizzo massimo è più piccolo o uguale all'indirizzo minimo.")
+
+                if p1 < 0 or p2 > UPPER_BOUND_ADDRESS:
+                    raise InvalidCommand("il range di indirizzi identificato non è valido.")
+
+                return ["scan", [p1, p2]]
+            else:
+                raise InvalidCommand("numero di parametri non valido per il comando 'start'.")
+        elif words[0] == "start":
+            if len(words) != 4:
+                raise InvalidCommand("sono necessari tre parametri per il comando 'start'.")
+            if not os.path.isfile(words[3]):
+                raise InvalidCommand("il file di configurazione non valido per il comando 'start'.")
+            return words
+        else:
+            raise InvalidCommand("{} non corrisponde a nessun comando valido.")
+
+    """
+    Termina il processo del driver e killa tutti i thread avviati.
+    """
+    def driver_exit(self):
+        print_log("Driver", "termino il processo.")
+        exit()
+
+
+"""
+La classe 'Handler' gestisce lo scambio di dati in tempo reale con gli slave MODBUS presenti nella mesh.
+"""
 class Handler:
     """
     Il costruttore importa il layout della rete MODBUS dal file di configurazione. 
     Se non riesce ad aprire una connessione con nessuno degli slave, oppure il file di configurazione è mal formattato
     termina il processo.
+    """
     """
     def __init__(self):
         try:
@@ -83,6 +282,9 @@ class Handler:
             exit()
         
         self.get_beanstalk()
+    """
+    def __init__(self, tube):
+
         
     """
     Fa il refresh dei valori presenti in ogni slave classificato come 'to_update' : 1.
@@ -273,7 +475,23 @@ class WriteDaemon(object):
                 finally:
                     mutex.release()
 
+"""
+La classe 'Scanner' identifica tutti gli slave modbus presenti nella mesh.
+"""
+class Scanner(object):
+    """
+    Fa lo scanner dall'indirizzo 'start_address' all'indirizzo 'end_address' (escluso). 
+    Quindi non si può avere 'start_address'=='end_address'. Alternativamente si può 
+    fornire una lista di indirizzi 'address_list' su cui effettuare lo scan. 
+    Non si possono usare entrambi i metodi.Nel caso in cui entrambi siano validi,
+    viene data la precedenza alla lista di indirizzi.
+    """
+    def __init__(self, tube):
+        pass
+    
+    def scan(self):
+        pass
+
 if __name__ == "__main__":
-    h = Handler()
-    RefreshThread(h)
-    WriteDaemon()
+    atexit.register(clean_up_processes)
+    d = Driver()
