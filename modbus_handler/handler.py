@@ -191,16 +191,15 @@ La classe 'Driver' soprintende e coordina l'azione delle due classi 'Handler' e 
 """
 class Driver(object):
 
-    self.scanning_thread = None
-    self.retrieving_thread = None
-    self.write_thread = None
-
     """
     Il costruttore deve creare un client beanstalk per poter comunicare con lo script di 
     sincronizzazione locale.
     """
     def __init__(self):
         print("\t***Driver attivato***")
+        self.scanning_thread = None
+        self.retrieving_thread = None
+        self.write_thread = None
         self.client = BeanstalkClient(BEANSTALKD_HOST, BEANSTALKD_PORT, auto_decode = True)
         try:
             print_log("Driver", "'watch': {} .".format(SERVER_TUBE))
