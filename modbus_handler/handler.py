@@ -90,10 +90,10 @@ class Handler:
     Le eventuali eccezioni vengono gestite all'interno del metodo.
     """
     def refresh_values(self):
+        print(repr(self.slave_instances))
         for slave in self.slave_instances:
             time.sleep(1)
             for sensor in slave['info']['map']:
-                print(repr(sensor))
                 #Se il sensore non deve essere aggiornato salto.
                 if sensor['to_update'] == 0:
                     continue
