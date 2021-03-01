@@ -223,8 +223,6 @@ class Driver(object):
                 except InvalidCommand as e:
                     print_log("Driver", "comando '{}' non valido:{}".format(data,e))
                     continue
-                print(repr(words))
-                continue
                 if words[0] == "scan":
                     scan(words)
                 else:
