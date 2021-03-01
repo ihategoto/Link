@@ -91,7 +91,6 @@ class Handler:
     """
     def refresh_values(self):
         for slave in self.slave_instances:
-            time.sleep(1)
             for sensor in slave['info']['map']:
                 #Se il sensore non deve essere aggiornato salto.
                 if sensor['to_update'] == 0:
