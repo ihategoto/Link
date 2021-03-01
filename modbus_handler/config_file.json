@@ -3,14 +3,6 @@
       "address":1,
       "map":[
          {
-            "name":"status",
-            "type":3,
-            "address":30016,
-            "to_update":1,
-            "um":"",
-            "decimals":1
-         },
-         {
             "name":"val_CO",
             "type":3,
             "address":30000,
@@ -128,6 +120,14 @@
             "address":30015,
             "to_update":1,
             "um":"%"
+         },
+         {
+            "name":"status",
+            "type":3,
+            "address":30016,
+            "to_update":1,
+            "um":"",
+            "decimals":1
          }
       ]
    },
