@@ -223,7 +223,7 @@ class Driver(object):
                 except InvalidCommand as e:
                     print_log("Driver", "comando '{}' non valido:{}".format(data,e))
                     continue
-                repr(words)
+                print(repr(words))
                 continue
                 if words[0] == "scan":
                     scan(words)
@@ -350,7 +350,7 @@ class Driver(object):
                 except ValueError:
                     raise InvalidCommand("il range di indirizzi specificato non è valido.")
                 
-                if p1 <= p2:
+                if p1 >= p2:
                     raise InvalidCommand("l'indirizzo massimo è più piccolo o uguale all'indirizzo minimo.")
 
                 if p1 < 0 or p2 > UPPER_BOUND_ADDRESS:
