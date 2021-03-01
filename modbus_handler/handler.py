@@ -219,6 +219,7 @@ class Driver(object):
                 data = job.data
                 client.delete_job(job.job_id)
                 print_log("Driver", "parsing del comando: {}".format(data))
+                continue
                 try:
                     words = self._parse_command(data)
                 except InvalidCommand as e:
@@ -245,7 +246,9 @@ class Driver(object):
     Il metodo avvia il processo di scanning.
     """
     def scan(self, parameters):
-        pass
+        if self.retrieving_thread is not None and self.retrieving_thread.is_active() and self.write_thread is not None and self.write_thread.is_active():
+            self.retrieving_thread.stop()
+            self.write_thread.stop()
 
     """
     Il seguente metodo avvia il thread che si occuperà del retrieving dei dati.
