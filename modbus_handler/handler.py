@@ -1,7 +1,7 @@
 import os, threading, minimalmodbus, serial, json, time, datetime, atexit, logging
 from pystalk import BeanstalkClient, BeanstalkError
 
-DEBUG = False
+DEBUG = True
 CONF_FILE = 'config_file.json'
 DAEMON_LOG_FILE = "daemon.log"
 
@@ -12,7 +12,7 @@ BYTESIZE = 8
 PARITY = serial.PARITY_NONE
 STOP_BITS = 1
 MODE = minimalmodbus.MODE_RTU
-TIME_OUT_READ = 5
+TIME_OUT_READ = 3
 TIME_OUT_WRITE = 5
 CLOSE_PORT_AFTER_EACH_CALL = False
 
@@ -90,7 +90,6 @@ class Handler:
     Le eventuali eccezioni vengono gestite all'interno del metodo.
     """
     def refresh_values(self):
-        print(repr(self.slave_instances))
         for slave in self.slave_instances:
             time.sleep(1)
             for sensor in slave['info']['map']:
