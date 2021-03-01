@@ -9,6 +9,28 @@
              "to_update":1,
              "um":"ppm",
              "decimals":2
+          },
+          {
+             "name":"val_eCO2",
+             "type":3,
+             "address":30001,
+             "to_update":1,
+             "um":"ppm"
+          },
+          {
+             "name":"val_TVCO",
+             "type":3,
+             "address":30002,
+             "to_update":1,
+             "um":"ppb"
+          },
+          {
+             "name":"val_PM1_0",
+             "type":3,
+             "address":30003,
+             "to_update":1,
+             "um":"ug/m3",
+             "decimals":2
           }
        ]
     },
@@ -21,6 +43,28 @@
              "address":30000,
              "to_update":1,
              "um":"ppm",
+             "decimals":2
+          },
+          {
+             "name":"val_eCO2",
+             "type":3,
+             "address":30001,
+             "to_update":1,
+             "um":"ppm"
+          },
+          {
+             "name":"val_TVCO",
+             "type":3,
+             "address":30002,
+             "to_update":1,
+             "um":"ppb"
+          },
+          {
+             "name":"val_PM1_0",
+             "type":3,
+             "address":30003,
+             "to_update":1,
+             "um":"ug/m3",
              "decimals":2
           }
        ]
@@ -35,6 +79,28 @@
              "to_update":1,
              "um":"ppm",
              "decimals":2
+          },
+          {
+             "name":"val_eCO2",
+             "type":3,
+             "address":30001,
+             "to_update":1,
+             "um":"ppm"
+          },
+          {
+             "name":"val_TVCO",
+             "type":3,
+             "address":30002,
+             "to_update":1,
+             "um":"ppb"
+          },
+          {
+             "name":"val_PM1_0",
+             "type":3,
+             "address":30003,
+             "to_update":1,
+             "um":"ug/m3",
+             "decimals":2
           }
        ]
     },
@@ -47,6 +113,28 @@
              "address":30000,
              "to_update":1,
              "um":"ppm",
+             "decimals":2
+          },
+          {
+             "name":"val_eCO2",
+             "type":3,
+             "address":30001,
+             "to_update":1,
+             "um":"ppm"
+          },
+          {
+             "name":"val_TVCO",
+             "type":3,
+             "address":30002,
+             "to_update":1,
+             "um":"ppb"
+          },
+          {
+             "name":"val_PM1_0",
+             "type":3,
+             "address":30003,
+             "to_update":1,
+             "um":"ug/m3",
              "decimals":2
           }
        ]
