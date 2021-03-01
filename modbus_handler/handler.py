@@ -67,7 +67,7 @@ def is_integer(v):
 
 # Funzione per la stampa di messaggi di log.
 def print_log(class_name, msg):
-    print("{} {}:{}".format(class_name, time.strftime("%a %d/%m/%Y %H:%M:%S"), msg))
+    print(" {} {}:{}".format(class_name, time.strftime("%a %d/%m/%Y %H:%M:%S"), msg))
 
 """
 Eccezioni personalizzate per la gestione del driver.
@@ -218,12 +218,12 @@ class Driver(object):
                 data = job.job_data
                 self.client.delete_job(job.job_id)
                 print_log("Driver", "parsing del comando: {}".format(data))
-                continue
                 try:
                     words = self._parse_command(data)
                 except InvalidCommand as e:
                     print_log("Driver", "comando '{}' non valido:{}".format(data,e))
                     continue
+                continue
                 if words[0] == "scan":
                     scan(words)
                 else:
