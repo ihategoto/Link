@@ -95,9 +95,11 @@ class Handler:
                 #Se il sensore non deve essere aggiornato salto.
                 if sensor['to_update'] == 0:
                     continue
+                """
                 if not self.check_fields(sensor, True):
                     print('Errore di configurazione di un sensore appartenente allo slave {}! Salto la scrittura sul database.'.format(slave['info']['address']))
-                    continue                
+                    continue               
+                """ 
                 address, functioncode, callback = self.get_call_info(slave, sensor)
                 try:
                     if sensor['type'] == HOLDING_REGISTER or sensor['type'] == INPUT_REGISTER:
