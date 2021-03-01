@@ -365,7 +365,7 @@ class Driver(object):
                 raise InvalidCommand("il file di configurazione non valido per il comando 'start'.")
             return words
         else:
-            raise InvalidCommand("{} non corrisponde a nessun comando valido.")
+            raise InvalidCommand("non corrisponde a nessun comando valido.")
 
     """
     Termina il processo del driver e killa tutti i thread avviati.
