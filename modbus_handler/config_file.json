@@ -7,7 +7,8 @@
             "type":3,
             "address":30016,
             "to_update":1,
-            "um":""
+            "um":"",
+            "decimals":1
          },
          {
             "name":"val_CO",
