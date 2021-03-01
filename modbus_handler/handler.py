@@ -215,7 +215,7 @@ class Driver(object):
     def serve(self):
         while True:
             for job in self.client.reserve_iter():
-                data = job.data
+                data = job.job_data
                 client.delete_job(job.job_id)
                 print_log("Driver", "parsing del comando: {}".format(data))
                 continue
