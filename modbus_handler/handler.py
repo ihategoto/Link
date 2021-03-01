@@ -92,6 +92,7 @@ class Handler:
     def refresh_values(self):
         for slave in self.slave_instances:
             for sensor in slave['info']['map']:
+                print(repr(sensor))
                 #Se il sensore non deve essere aggiornato salto.
                 if sensor['to_update'] == 0:
                     continue
