@@ -4,7 +4,7 @@
       "map":[
          {
             "name":"system",
-            "type":0,
+            "type":1,
             "address":0,
             "to_update":1
          },
@@ -141,7 +141,7 @@
       "map":[
          {
             "name":"system",
-            "type":0,
+            "type":1,
             "address":0,
             "to_update":1
          },
@@ -278,7 +278,7 @@
       "map":[
          {
             "name":"system",
-            "type":0,
+            "type":1,
             "address":0,
             "to_update":1
          },
