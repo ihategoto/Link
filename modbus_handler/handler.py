@@ -285,7 +285,7 @@ class Driver(object):
             return 
         try:
             self.retrieving_thread.set_config(parameters[3])
-        except JSONDecodeError as e:
+        except json.JSONDecodeError as e:
             print_log("Driver", "comando 'start': file di configurazione non valido: {}".format(e))
             return
         except EmptyMesh:
