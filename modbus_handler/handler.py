@@ -438,11 +438,11 @@ class Handler:
                     data = {'slave' : slave['address'], 'sensor' : sensor['address'], 'timestamp' : time.time(), "value" : value}
                     self.client.put_job(json.dumps(data))
                 except (ValueError, TypeError) as e:
-                    print("Qualcosa è andato storto durante la lettura di {} da {}:{}".format(sensor['address'], slave['info']['address'], e))
+                    print("Qualcosa è andato storto durante la lettura di {} da {}:{}".format(sensor['address'], slave['address'], e))
                 except minimalmodbus.ModbusException as e:
-                    print("Errore MODBUS durante la lettura di {} da {}: {}".format(sensor['address'], slave['info']['address'], e))
+                    print("Errore MODBUS durante la lettura di {} da {}: {}".format(sensor['address'], slave['address'], e))
                 except BeanstalkError as e:
-                    print("Impossibile scrivere sul server BeansTalk il contenuto del sensore {} dello slave {}: {}".format(sensor['address'], slave['info']['address'], e))
+                    print("Impossibile scrivere sul server BeansTalk il contenuto del sensore {} dello slave {}: {}".format(sensor['address'], slave['address'], e))
         #slave['instance'].serial.close()   #per dare la possibilità al daemon dei comandi di accedere agli slave.
     
     """
