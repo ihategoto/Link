@@ -3,6 +3,12 @@
       "address":1,
       "map":[
          {
+            "name":"system",
+            "type":0,
+            "address":0,
+            "to_update":1
+         },
+         {
             "name":"val_eCO2",
             "type":3,
             "address":30001,
@@ -133,7 +139,12 @@
    {
       "address":2,
       "map":[
-
+         {
+            "name":"system",
+            "type":0,
+            "address":0,
+            "to_update":1
+         },
          {
             "name":"val_eCO2",
             "type":3,
@@ -265,6 +276,12 @@
    {
       "address":3,
       "map":[
+         {
+            "name":"system",
+            "type":0,
+            "address":0,
+            "to_update":1
+         },
          {
             "name":"val_eCO2",
             "type":3,
