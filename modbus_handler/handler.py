@@ -274,6 +274,8 @@ class Driver(object):
             if self.retrieving_thread.is_alive():
                 print_log("Driver", "comando 'start': processo di retrieving in corso.")
                 return
+            self.retrieving_thread = RetrieveThread()
+            self.write_thread = WriteThread()
         else:
             self.retrieving_thread = RetrieveThread()
             self.write_thread = WriteThread()
