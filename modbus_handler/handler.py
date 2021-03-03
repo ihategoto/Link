@@ -392,7 +392,7 @@ class Handler:
         if len(self.entries) == 0:
             raise EmptyMesh
 
-        for entry in entries:
+        for entry in self.entries:
             if not self.check_fields(entry, False):
                 continue
             if not hasattr(self, 'serial_instance'):
