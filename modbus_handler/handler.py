@@ -224,9 +224,9 @@ class Driver(object):
                     print_log("Driver", "comando '{}' non valido:{}".format(data,e))
                     continue
                 if words[0] == "scan":
-                    scan(words)
+                    self.scan(words)
                 else:
-                    start(words)
+                    self.start(words)
 
     """
     Il seguente metodo avvia il thread che si occuperà dello scanning della mesh MODBUS
