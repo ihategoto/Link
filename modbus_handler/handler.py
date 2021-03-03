@@ -421,7 +421,6 @@ class Handler:
         if not hasattr(self, 'slave_maps') or not hasattr(self, 'client') or not hasattr(self,'serial_instance'):
             raise AttributeError
         for slave in self.slave_maps:
-            time.sleep(2)
             self.serial_instance.address = slave['address']
             for sensor in slave['map']:
                 #Se il sensore non deve essere aggiornato salto.
