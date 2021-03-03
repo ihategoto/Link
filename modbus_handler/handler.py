@@ -1,7 +1,7 @@
 import os, threading, minimalmodbus, serial, json, time, datetime, atexit, uuid
 from pystalk import BeanstalkClient, BeanstalkError
 
-DEBUG = True
+DEBUG = False
 
 #MODBUS consts
 SERIAL_PORT = '/dev/ttyS0'
@@ -421,6 +421,7 @@ class Handler:
         if not hasattr(self, 'slave_maps') or not hasattr(self, 'client') or not hasattr(self,'serial_instance'):
             raise AttributeError
         for slave in self.slave_maps:
+            time.sleep(2)
             self.serial_instance.address = slave['address']
             for sensor in slave['map']:
                 #Se il sensore non deve essere aggiornato salto.
