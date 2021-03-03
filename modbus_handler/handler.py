@@ -421,7 +421,13 @@ class Handler:
         if not hasattr(self, 'slave_maps') or not hasattr(self, 'client') or not hasattr(self,'serial_instance'):
             raise AttributeError
         for slave in self.slave_maps:
-            self.serial_instance.address = slave['address']
+            self.serial_instance = minimalmodbus.Instrument(SERIAL_PORT, slave['address'], mode = MODE, close_port_after_each_call = CLOSE_PORT_AFTER_EACH_CALL, debug = DEBUG)
+            self.serial_instance.serial.baudrate = BAUDRATE
+            self.serial_instance.serial.parity = PARITY
+            self.serial_instance.serial.bytesize = BYTESIZE
+            self.serial_instance.serial.stopbits = STOP_BITS
+            self.serial_instance.serial.timeout = TIME_OUT_READ
+            self.serial_instance.serial.write_timeout = TIME_OUT_WRITE
             for sensor in slave['map']:
                 #Se il sensore non deve essere aggiornato salto.
                 if sensor['to_update'] == 0:
