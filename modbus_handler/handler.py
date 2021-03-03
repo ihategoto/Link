@@ -12,7 +12,7 @@ STOP_BITS = 1
 MODE = minimalmodbus.MODE_RTU
 TIME_OUT_READ = 3
 TIME_OUT_WRITE = 5
-CLOSE_PORT_AFTER_EACH_CALL = False
+CLOSE_PORT_AFTER_EACH_CALL = True
 
 REFRESH_RATE = 5 #seconds
 
@@ -443,7 +443,6 @@ class Handler:
                     print("Errore MODBUS durante la lettura di {} da {}: {}".format(sensor['address'], slave['address'], e))
                 except BeanstalkError as e:
                     print("Impossibile scrivere sul server BeansTalk il contenuto del sensore {} dello slave {}: {}".format(sensor['address'], slave['address'], e))
-        #slave['instance'].serial.close()   #per dare la possibilità al daemon dei comandi di accedere agli slave.
     
     """
     Ritorna l'indirizzo relativo, il functioncode adatto al sensore e la funzione corretta di minimalmodbus.
