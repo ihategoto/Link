@@ -4,7 +4,7 @@ from pystalk import BeanstalkClient, BeanstalkError
 DEBUG = False
 
 #MODBUS consts
-SERIAL_PORT = '/dev/ttyUSB0'
+SERIAL_PORT = '/dev/ttyS0'
 BAUDRATE = 9600
 BYTESIZE = 8
 PARITY = serial.PARITY_NONE
@@ -142,7 +142,7 @@ class WriteThread(threading.Thread):
         self.command_tube = tube
 
     def run(self):
-        if not hasattr(self, command_tube):
+        if not hasattr(self, 'command_tube'):
             print_log("WriteThread", "parametri non sufficienti per avviare il thread.")
             return
         self.stop_flag.clear()
@@ -411,7 +411,7 @@ class Handler:
     Le eventuali eccezioni vengono gestite all'interno del metodo.
     """
     def refresh_values(self):
-        if not hasattr(self, slave_instances) or not hasattr(self, client):
+        if not hasattr(self, 'slave_instances') or not hasattr(self, 'client'):
             raise AttributeError
         for slave in self.slave_instances:
             for sensor in slave['info']['map']:
