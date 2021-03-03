@@ -398,7 +398,7 @@ class Handler:
             if not hasattr(self, 'serial_instance'):
                 try:
                     self.serial_instance = minimalmodbus.Instrument(SERIAL_PORT, slave['address'], mode = MODE, close_port_after_each_call = CLOSE_PORT_AFTER_EACH_CALL, debug = DEBUG)
-                    self.serial_instance = serial.baudrate = BAUDRATE
+                    self.serial_instance.serial.baudrate = BAUDRATE
                     self.serial_instance.serial.parity = PARITY
                     self.serial_instance.serial.bytesize = BYTESIZE
                     self.serial_instance.serial.stopbits = STOP_BITS
