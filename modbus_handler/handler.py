@@ -393,7 +393,6 @@ class Handler:
             raise EmptyMesh
         self.slave_maps = []
         for slave in slaves:
-            print(repr(slave))
             if not self.check_fields(slave, False):
                 continue
             if not hasattr(self, 'serial_instance'):
@@ -423,7 +422,7 @@ class Handler:
             raise AttributeError
         for slave in self.slave_maps:
             self.serial_instance.address = slave['address']
-            for sensor in slave:
+            for sensor in slave['map']:
                 #Se il sensore non deve essere aggiornato salto.
                 if sensor['to_update'] == 0:
                     continue
