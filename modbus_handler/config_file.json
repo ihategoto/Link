@@ -6,7 +6,7 @@
             "name":"val_eCO2",
             "type":3,
             "address":30001,
-            "to_update":1,
+            "to_update":0,
             "um":"ppm"
          },
          {
@@ -138,7 +138,7 @@
             "name":"val_eCO2",
             "type":3,
             "address":30001,
-            "to_update":1,
+            "to_update":0,
             "um":"ppm"
          },
          {
@@ -269,7 +269,7 @@
             "name":"status",
             "type":3,
             "address":30016,
-            "to_update":1,
+            "to_update":0,
             "um":"g"
          },
          {
