@@ -116,6 +116,7 @@ class RetrieveThread(threading.Thread):
             except AttributeError:
                 print_log("RetrieveThread", "parametri non sufficienti per avviare il processo di retrieving.")
                 print_log("RetrieveThread", "esco!")
+                mutex.release()
                 return
             mutex.release()
             if self.stopped():
@@ -437,7 +438,7 @@ class Handler:
                     print("Errore MODBUS durante la lettura di {} da {}: {}".format(sensor['address'], slave['info']['address'], e))
                 except BeanstalkError as e:
                     print("Impossibile scrivere sul server BeansTalk il contenuto del sensore {} dello slave {}: {}".format(sensor['address'], slave['info']['address'], e))
-        slave['instance'].serial.close()   #per dare la possibilità al daemon dei comandi di accedere agli slave.
+        #slave['instance'].serial.close()   #per dare la possibilità al daemon dei comandi di accedere agli slave.
     
     """
     Ritorna l'indirizzo relativo, il functioncode adatto al sensore e la funzione corretta di minimalmodbus.
