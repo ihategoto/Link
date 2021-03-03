@@ -455,7 +455,6 @@ class Handler:
                     print("Impossibile scrivere sul server BeansTalk il contenuto del sensore {} dello slave {}: {}".format(sensor['address'], slave['address'], e))
                 finally:
                     i+=1
-        #slave['instance'].serial.close()   #per dare la possibilità al daemon dei comandi di accedere agli slave.
     
     """
     Ritorna l'indirizzo relativo, il functioncode adatto al sensore e la funzione corretta di minimalmodbus.
