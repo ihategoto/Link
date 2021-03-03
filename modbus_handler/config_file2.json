@@ -2,6 +2,13 @@
     {
        "address":1,
        "map":[
+        {
+            "name":"val_eCO2",
+            "type":1,
+            "address":-1,
+            "to_update":1,
+            "um":"ppm"
+         },
           {
              "name":"val_eCO2",
              "type":3,
@@ -133,6 +140,13 @@
     {
        "address":2,
        "map":[
+        {
+            "name":"val_eCO2",
+            "type":3,
+            "address":-1,
+            "to_update":1,
+            "um":"ppm"
+         },
           {
              "name":"val_eCO2",
              "type":3,
@@ -264,6 +278,13 @@
     {
        "address":3,
        "map":[
+        {
+            "name":"val_eCO2",
+            "type":3,
+            "address":-1,
+            "to_update":1,
+            "um":"ppm"
+         },
           {
              "name":"val_eCO2",
              "type":3,
