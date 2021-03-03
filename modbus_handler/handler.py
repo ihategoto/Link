@@ -393,6 +393,7 @@ class Handler:
             raise EmptyMesh
         self.slave_maps = []
         for slave in slaves:
+            print(repr(slave))
             if not self.check_fields(slave, False):
                 continue
             if not hasattr(self, 'serial_instance'):
