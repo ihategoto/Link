@@ -4,7 +4,7 @@ from pystalk import BeanstalkClient, BeanstalkError
 DEBUG = False
 
 #MODBUS consts
-SERIAL_PORT = '/dev/ttyp0'
+SERIAL_PORT = '/dev/ttyS0'
 BAUDRATE = 9600
 BYTESIZE = 8
 PARITY = serial.PARITY_NONE
