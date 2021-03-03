@@ -6,7 +6,7 @@
             "name":"val_eCO2",
             "type":3,
             "address":30001,
-            "to_update":0,
+            "to_update":1,
             "um":"ppm"
          },
          {
@@ -138,7 +138,7 @@
             "name":"val_eCO2",
             "type":3,
             "address":30001,
-            "to_update":0,
+            "to_update":1,
             "um":"ppm"
          },
          {
@@ -266,21 +266,6 @@
       "address":3,
       "map":[
          {
-            "name":"status",
-            "type":3,
-            "address":30016,
-            "to_update":0,
-            "um":"g"
-         },
-         {
-            "name":"val_CO",
-            "type":3,
-            "address":30000,
-            "to_update":1,
-            "um":"ppm",
-            "decimals":2
-         },
-         {
             "name":"val_eCO2",
             "type":3,
             "address":30001,
@@ -293,6 +278,21 @@
             "address":30002,
             "to_update":1,
             "um":"ppb"
+         },
+         {
+            "name":"status",
+            "type":3,
+            "address":30016,
+            "to_update":1,
+            "um":"g"
+         },
+         {
+            "name":"val_CO",
+            "type":3,
+            "address":30000,
+            "to_update":1,
+            "um":"ppm",
+            "decimals":2
          },
          {
             "name":"status",
