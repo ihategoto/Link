@@ -1,7 +1,7 @@
 import os, threading, minimalmodbus, serial, json, time, datetime, atexit, uuid
 from pystalk import BeanstalkClient, BeanstalkError
 
-DEBUG = False
+DEBUG = True
 
 #MODBUS consts
 SERIAL_PORT = '/dev/ttyS0'
