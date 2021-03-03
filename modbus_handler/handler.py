@@ -67,7 +67,7 @@ def is_integer(v):
 
 # Funzione per la stampa di messaggi di log.
 def print_log(class_name, msg):
-    print(" {} {}:{}".format(class_name, time.strftime("%a %d/%m/%Y %H:%M:%S"), msg))
+    print("{} {}:{}".format(class_name, time.strftime("%a %d/%m/%Y %H:%M:%S"), msg))
 
 """
 Eccezioni personalizzate per la gestione del driver.
@@ -153,9 +153,9 @@ class WriteThread(threading.Thread):
             print_log("write_thread","impossibile inserire nella watchlist la tube '{}': {}".format(INPUT_TUBE, e))
 
         while True:
+            if mutex.locked():
+                mutex.release()
             if self.stopped():
-                if mutex.locked():
-                    mutex.release()
                 print_log("WriteThread", "esco!")
                 return
             for job in client.reserve_iter():
