@@ -391,23 +391,25 @@ class Handler:
         slaves = get_slaves(config_file)
         if len(slaves) == 0:
             raise EmptyMesh
-        self.slave_instances = []
+        self.slave_maps = []
         for slave in slaves:
             if not self.check_fields(slave, False):
                 continue
-            try:
-                self.slave_instances.append({'instance' : minimalmodbus.Instrument(SERIAL_PORT, slave['address'], mode = MODE, close_port_after_each_call = CLOSE_PORT_AFTER_EACH_CALL, debug = DEBUG), 'info' : slave})
-                index = len(self.slave_instances) - 1
-                self.slave_instances[index]['instance'].serial.baudrate = BAUDRATE
-                self.slave_instances[index]['instance'].serial.parity = PARITY
-                self.slave_instances[index]['instance'].serial.bytesize = BYTESIZE
-                self.slave_instances[index]['instance'].serial.stopbits = STOP_BITS
-                self.slave_instances[index]['instance'].serial.timeout = TIME_OUT_READ
-                self.slave_instances[index]['instance'].serial.write_timeout = TIME_OUT_WRITE
-            except Exception:
-                raise
+            if not hasattr(self, 'serial_instance'):
+                try:
+                    self.serial_instance = minimalmodbus.Instrument(SERIAL_PORT, slave['address'], mode = MODE, close_port_after_each_call = CLOSE_PORT_AFTER_EACH_CALL, debug = DEBUG)
+                    self.serial_instance = serial.baudrate = BAUDRATE
+                    self.serial_instance.serial.parity = PARITY
+                    self.serial_instance.serial.bytesize = BYTESIZE
+                    self.serial_instance.serial.stopbits = STOP_BITS
+                    self.serial_instance.serial.timeout = TIME_OUT_READ
+                    self.serial_instance.serial.write_timeout = TIME_OUT_WRITE
+                except Exception:
+                    raise
+
+            self.slave_maps.append(slave)
         
-        if len(self.slave_instances) == 0:
+        if len(self.slave_maps) == 0:
             raise EmptyMesh
 
     """
@@ -416,17 +418,18 @@ class Handler:
     Le eventuali eccezioni vengono gestite all'interno del metodo.
     """
     def refresh_values(self):
-        if not hasattr(self, 'slave_instances') or not hasattr(self, 'client'):
+        if not hasattr(self, 'slave_maps') or not hasattr(self, 'client') or not hasattr(self,'serial_instance'):
             raise AttributeError
-        for slave in self.slave_instances:
-            for sensor in slave['info']['map']:
+        for slave in self.slave_maps:
+            self.serial_instance.address = slave['address']
+            for sensor in slave:
                 #Se il sensore non deve essere aggiornato salto.
                 if sensor['to_update'] == 0:
                     continue
                 if not self.check_fields(sensor, True):
                     print('Errore di configurazione di un sensore appartenente allo slave {}! Salto la scrittura sul database.'.format(slave['info']['address']))
                     continue                
-                address, functioncode, callback = self.get_call_info(slave, sensor)
+                address, functioncode, callback = self.get_call_info(self.serial_instance, sensor)
                 try:
                     if sensor['type'] == HOLDING_REGISTER or sensor['type'] == INPUT_REGISTER:
                         value = callback(address, functioncode = functioncode, number_of_decimals = sensor['decimals'] if 'decimals' in sensor else 0)
@@ -450,24 +453,24 @@ class Handler:
     
     Ritorna: indirizzo relativo del sensore, il functioncode per l'operazione richiesta e la funzione adeguata per eseguirla.
     """
-    def get_call_info(self, slave, sensor):
+    def get_call_info(self, serial_instance, sensor):
         if sensor['type'] == BIT:
             address = sensor['address'] - 10000
             functioncode = 2
-            callback = slave['instance'].read_bit
+            callback = serial_instance.read_bit
         elif sensor['type'] == INPUT_REGISTER:
             address = sensor['address'] - 30000
             functioncode = 4
-            callback = slave['instance'].read_register
+            callback = serial_instance.read_register
         elif sensor['type'] == HOLDING_REGISTER:
             address = sensor['address'] - 40000
             functioncode = 3
-            callback = slave['instance'].read_register
+            callback = serial_instance.read_register
         else:
             #L'indirizzo relativo delle coil coincide con quello fisico.
             address = sensor['address']
             functioncode = 1
-            callback = slave['instance'].read_bit
+            callback = serial_instance.read_bit
             
         return address, functioncode, callback
 
