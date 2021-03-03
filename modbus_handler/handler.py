@@ -431,10 +431,7 @@ class Handler:
                     continue                
                 address, functioncode, callback = self.get_call_info(self.serial_instance, sensor)
                 try:
-                    if sensor['type'] == HOLDING_REGISTER or sensor['type'] == INPUT_REGISTER:
-                        value = callback(address, functioncode = functioncode, number_of_decimals = sensor['decimals'] if 'decimals' in sensor else 0)
-                    else:
-                        value = callback(address, functioncode = functioncode)
+                    value = callback(address, functioncode = functioncode)
                     data = {'slave' : slave['address'], 'sensor' : sensor['address'], 'timestamp' : time.time(), "value" : value}
                     self.client.put_job(json.dumps(data))
                 except (ValueError, TypeError) as e:
