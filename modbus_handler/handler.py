@@ -244,7 +244,7 @@ class Driver(object):
     Il metodo avvia il processo di scanning.
     """
     def scan(self, parameters):
-        if self.retrieving_thread is not None and self.retrieving_thread.is_active() and self.write_thread is not None and self.write_thread.is_active():
+        if self.retrieving_thread is not None and self.retrieving_thread.is_alive() and self.write_thread is not None and self.write_thread.is_alive():
             self.retrieving_thread.stop()
             self.write_thread.stop()
 
@@ -263,7 +263,7 @@ class Driver(object):
     """
     def start(self, parameters):
         if isinstance(self.scanning_thread, threading.Thread):
-            if self.scanning_thread.is_active():
+            if self.scanning_thread.is_alive():
                 print_log("Driver", "comando 'start': processo di scanning in corso.")
                 return
         """
@@ -271,7 +271,7 @@ class Driver(object):
         Ovvero che se RetrieveThread è attivo lo è anche WriteThread.
         """
         if isinstance(self.retrieving_thread, threading.Thread):
-            if self.retrieving_thread.is_active():
+            if self.retrieving_thread.is_alive():
                 print_log("Driver", "comando 'start': processo di retrieving in corso.")
                 return
         else:
