@@ -154,8 +154,10 @@ class WriteThread(threading.Thread):
             print_log("write_thread","impossibile inserire nella watchlist la tube '{}': {}".format(INPUT_TUBE, e))
 
         while True:
+            """
             if mutex.locked():
                 mutex.release()
+            """
             if self.stopped():
                 print_log("WriteThread", "esco!")
                 return
