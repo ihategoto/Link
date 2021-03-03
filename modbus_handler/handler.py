@@ -423,7 +423,7 @@ class Handler:
         for slave in self.slave_maps:
             self.serial_instance.address = slave['address']
             for sensor in slave['map']:
-                time.sleep(2)
+                #time.sleep(2)
                 print(repr(sensor))
                 #Se il sensore non deve essere aggiornato salto.
                 if sensor['to_update'] == 0:
