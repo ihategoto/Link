@@ -423,8 +423,7 @@ class Handler:
         for slave in self.slave_maps:
             self.serial_instance.address = slave['address']
             for sensor in slave['map']:
-                #time.sleep(2)
-                print(repr(sensor))
+                time.sleep(2)
                 #Se il sensore non deve essere aggiornato salto.
                 if sensor['to_update'] == 0:
                     continue
@@ -442,7 +441,7 @@ class Handler:
                     print("Errore MODBUS durante la lettura di {} da {}: {}".format(sensor['address'], slave['address'], e))
                 except BeanstalkError as e:
                     print("Impossibile scrivere sul server BeansTalk il contenuto del sensore {} dello slave {}: {}".format(sensor['address'], slave['address'], e))
-    
+
     """
     Ritorna l'indirizzo relativo, il functioncode adatto al sensore e la funzione corretta di minimalmodbus.
     
