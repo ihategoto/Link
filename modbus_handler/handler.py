@@ -30,7 +30,7 @@ HOLDING_REGISTER = 4
 #MODBUS SCANNER consts
 UPPER_BOUND_ADDRESS = 32
 
-def get_slaves(config_file):
+def get_entries(config_file):
     with open(config_file) as f:
         d = json.load(f)
     return d
@@ -388,16 +388,16 @@ class Handler:
         self.get_beanstalk(tube)
 
     def set_config(self, config_file):
-        slaves = get_slaves(config_file)
-        if len(slaves) == 0:
+        self.entries = get_entries(config_file)
+        if len(entries) == 0:
             raise EmptyMesh
-        self.slave_maps = []
-        for slave in slaves:
-            if not self.check_fields(slave, False):
+
+        for entry in entries:
+            if not self.check_fields(entry, False):
                 continue
             if not hasattr(self, 'serial_instance'):
                 try:
-                    self.serial_instance = minimalmodbus.Instrument(SERIAL_PORT, slave['address'], mode = MODE, close_port_after_each_call = CLOSE_PORT_AFTER_EACH_CALL, debug = DEBUG)
+                    self.serial_instance = minimalmodbus.Instrument(SERIAL_PORT, entry['slave_address'], mode = MODE, close_port_after_each_call = CLOSE_PORT_AFTER_EACH_CALL, debug = DEBUG)
                     self.serial_instance.serial.baudrate = BAUDRATE
                     self.serial_instance.serial.parity = PARITY
                     self.serial_instance.serial.bytesize = BYTESIZE
@@ -407,40 +407,34 @@ class Handler:
                 except Exception:
                     raise
 
-            self.slave_maps.append(slave)
-        
-        if len(self.slave_maps) == 0:
-            raise EmptyMesh
-
     """
     Fa il refresh dei valori presenti in ogni slave classificato come 'to_update' : 1.
     Nel caso in cui un sensore non abbia sufficienti informazioni associate, la sua lettura viene saltata.
     Le eventuali eccezioni vengono gestite all'interno del metodo.
     """
     def refresh_values(self):
-        if not hasattr(self, 'slave_maps') or not hasattr(self, 'client') or not hasattr(self,'serial_instance'):
+        if not hasattr(self, 'entries') or not hasattr(self, 'client') or not hasattr(self,'serial_instance'):
             raise AttributeError
-        for slave in self.slave_maps:
-            self.serial_instance.address = slave['address']
-            for sensor in slave['map']:
-                #Se il sensore non deve essere aggiornato salto.
-                if sensor['to_update'] == 0:
-                    continue
-                if not self.check_fields(sensor, True):
-                    print('Errore di configurazione di un sensore appartenente allo slave {}! Salto la scrittura sul database.'.format(slave['info']['address']))
-                    continue                
-                address, functioncode, callback = self.get_call_info(self.serial_instance, sensor)
-                try:
-                    value = callback(address, functioncode = functioncode)
-                    data = {'slave' : slave['address'], 'sensor' : sensor['address'], 'timestamp' : time.time(), "value" : value}
-                    self.client.put_job(json.dumps(data))
-                except (ValueError, TypeError) as e:
-                    print("Qualcosa è andato storto durante la lettura di {} da {}:{}".format(sensor['address'], slave['address'], e))
-                except minimalmodbus.ModbusException as e:
-                    print("Errore MODBUS durante la lettura di {} da {}: {}".format(sensor['address'], slave['address'], e))
-                except BeanstalkError as e:
-                    print("Impossibile scrivere sul server BeansTalk il contenuto del sensore {} dello slave {}: {}".format(sensor['address'], slave['address'], e))
-            time.sleep(1)
+        for entry in self.entries:
+            #Se il sensore non deve essere aggiornato salto.
+            if entry['to_update'] == 0:
+                continue
+            if not self.check_fields(entry, True):
+                print('Errore di configurazione di un sensore appartenente allo slave {}! Salto la scrittura sul database.'.format(slave['info']['address']))
+                continue        
+            self.serial_instance.address = entry['slave_address']        
+            address, functioncode, callback = self.get_call_info(self.serial_instance, entry)
+            try:
+                value = callback(address, functioncode = functioncode)
+                data = {'slave' : entry['slave_address'], 'sensor' : entry['address'], 'timestamp' : time.time(), "value" : value}
+                self.client.put_job(json.dumps(data))
+            except (ValueError, TypeError) as e:
+                print("Qualcosa è andato storto durante la lettura di {} da {}:{}".format(entry['address'], entry['slave_address'], e))
+            except minimalmodbus.ModbusException as e:
+                print("Errore MODBUS durante la lettura di {} da {}: {}".format(entry['address'], entry['slave_address'], e))
+            except BeanstalkError as e:
+                print("Impossibile scrivere sul server BeansTalk il contenuto del sensore {} dello slave {}: {}".format(entry['address'], entry['slave_address'], e))
+            #time.sleep(1)
     """
     Ritorna l'indirizzo relativo, il functioncode adatto al sensore e la funzione corretta di minimalmodbus.
     
