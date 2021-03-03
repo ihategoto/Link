@@ -389,7 +389,7 @@ class Handler:
 
     def set_config(self, config_file):
         self.entries = get_entries(config_file)
-        if len(entries) == 0:
+        if len(self.entries) == 0:
             raise EmptyMesh
 
         for entry in entries:
