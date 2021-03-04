@@ -60,7 +60,7 @@ class Handler:
             print('La lista degli slave è vuota.\nControllare il contenuto del file:{}'.format(CONFIG_FILE))
             exit()
 
-        self.serial_line = minimalmodbus.Instrument(SERIAL_PORT, slaves[0]['address'], debug = DEBUG, close_port_after_each_call = CLOSE_PORT_AFTER_EACH_CALL)
+        self.serial_line = minimalmodbus.Instrument(SERIAL_PORT, self.slaves[0]['address'], debug = DEBUG, close_port_after_each_call = CLOSE_PORT_AFTER_EACH_CALL)
         self.serial_line.serial.baudrate = BAUDRATE
         self.serial_line.serial.parity = PARITY
         self.serial_line.serial.bytesize = BYTESIZE
