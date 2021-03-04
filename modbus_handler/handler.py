@@ -75,6 +75,11 @@ class Handler:
     Le eventuali eccezioni vengono gestite all'interno del metodo.
     """
     def refresh_values(self):
+        client = BeanstalkClient(BEANSTALKD_HOST, BEANSTALKD_PORT, auto_decode = True)
+        try:
+            client.watch(INPUT_TUBE)
+        except BeanstalkError as e:
+            print("Impossibile inserire nella watchlist la tube '{}': {}".format(INPUT_TUBE, e))
         for slave in self.slaves:
             self.serial_line.address = slave['address']
             try:
@@ -90,7 +95,29 @@ class Handler:
                 print("Errore MODBUS durante la lettura da {}: {}".format(slave['address'], e))
             except BeanstalkError as e:
                 print("Impossibile scrivere sul server BeansTalk il contenuto dello slave {}: {}".format(slave['address'], e))
-            time.sleep(0.5)
+            job = client.reserve_job(timeout = 1)
+            print("{} {}".format(job.job_id, job.job_data))
+            """
+            data = job.job_data
+            client.delete_job(job.job_id)
+            try:
+                decoded_data = json.loads(data)
+                Handler.write(decoded_data['slave'], decoded_data['sensor'], decoded_data['value'])
+            except json.JSONDecodeError as e:
+                print("Impossibile decodificare il comando {}: {} ".format(data, e))
+            except KeyError as e:
+                print("Il formato del comando non è valido: {}".format(e))
+            except ValueError as e:
+                print("Valore non valido: {}".format(e))
+            except TypeError as e:
+                print("Tipo non valido: {}".format(e))
+            except serial.SerialException as e:
+                print("Errore della linea seriale: {}".format(e))
+            except minimalmodbus.ModbusException as e:
+                print("Errore nel protocollo Modbus: {}".format(e))
+            except InvalidRegister as e:
+                print("Indirizzo del registro non valido.")
+            """
     """
     Ritorna l'indirizzo relativo, il functioncode adatto al sensore e la funzione corretta di minimalmodbus.
     
@@ -210,47 +237,8 @@ class RefreshThread(object):
             self.instance.refresh_values()
             mutex.release()
             time.sleep(REFRESH_RATE-(int(time.time())-now) if REFRESH_RATE-(int(time.time())-now) >= 0 else 0)
-
-class WriteDaemon(object):
-
-    def __init__(self):
-        thread = threading.Thread(target = self.run, args = ())
-        thread.daemon = True
-        thread.start()
-
-    def run(self):
-        client = BeanstalkClient(BEANSTALKD_HOST, BEANSTALKD_PORT, auto_decode = True)
-        try:
-            client.watch(INPUT_TUBE)
-        except BeanstalkError as e:
-            print("Impossibile inserire nella watchlist la tube '{}': {}".format(INPUT_TUBE, e))
-
-        while True:
-            for job in client.reserve_iter():
-                data = job.job_data
-                client.delete_job(job.job_id)
-                mutex.acquire()
-                try:
-                    decoded_data = json.loads(data)
-                    Handler.write(decoded_data['slave'], decoded_data['sensor'], decoded_data['value'])
-                except json.JSONDecodeError as e:
-                    print("Impossibile decodificare il comando {}: {} ".format(data, e))
-                except KeyError as e:
-                    print("Il formato del comando non è valido: {}".format(e))
-                except ValueError as e:
-                    print("Valore non valido: {}".format(e))
-                except TypeError as e:
-                    print("Tipo non valido: {}".format(e))
-                except serial.SerialException as e:
-                    print("Errore della linea seriale: {}".format(e))
-                except minimalmodbus.ModbusException as e:
-                    print("Errore nel protocollo Modbus: {}".format(e))
-                except InvalidRegister as e:
-                    print("Indirizzo del registro non valido.")
-                finally:
-                    mutex.release()
+        
 
 if __name__ == "__main__":
     h = Handler()
     RefreshThread(h)
-    WriteDaemon()
