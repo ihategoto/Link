@@ -305,7 +305,7 @@ class Driver(object):
 
         self.write_thread.set_tube(parameters[2])
         self.retrieving_thread.start()
-        self.write_thread.start()
+        #self.write_thread.start()
     
     """
     Il seguente metodo fa il parsing del comando arrivato sulla tube 'driver'.
