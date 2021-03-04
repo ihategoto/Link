@@ -1,7 +1,7 @@
 [
     {
         "name":"val_eCO2",
-        "slave_address":3,
+        "slave_address":2,
         "type":3,
         "address":30001,
         "to_update":1,
@@ -10,14 +10,14 @@
     {
         "name":"val_eCO2",
         "type":3,
-        "slave_address":5,
+        "slave_address":1,
         "address":30001,
         "to_update":1,
         "um":"ppm"
     },
     {
         "name":"val_CO",
-        "slave_address":3,
+        "slave_address":2,
         "type":3,
         "address":30000,
         "to_update":1,
@@ -28,13 +28,13 @@
         "name":"val_TVCO",
         "type":3,
         "address":30002,
-        "slave_address":5,
+        "slave_address":1,
         "to_update":1,
         "um":"ppb"
     },
     {
         "name":"val_TVCO",
-        "slave_address":3,
+        "slave_address":2,
         "type":3,
         "address":30002,
         "to_update":1,
@@ -43,7 +43,7 @@
     {
         "name":"val_PM1_0",
         "type":3,
-        "slave_address":5,
+        "slave_address":1,
         "address":30003,
         "to_update":1,
         "um":"ug/m3",
@@ -52,7 +52,7 @@
     {
         "name":"val_PM1_0",
         "type":3,
-        "slave_address":3,
+        "slave_address":2,
         "address":30003,
         "to_update":1,
         "um":"ug/m3",
@@ -61,7 +61,7 @@
     {
         "name":"status",
         "type":3,
-        "slave_address":5,
+        "slave_address":1,
         "address":30016,
         "to_update":1,
         "um":"g"
@@ -69,7 +69,7 @@
     {
         "name":"val_PM2_5",
         "type":3,
-        "slave_address":3,
+        "slave_address":2,
         "address":30004,
         "to_update":1,
         "um":"ug/m3",
@@ -78,7 +78,7 @@
     {
         "name":"val_CO",
         "type":3,
-        "slave_address":5,
+        "slave_address":1,
         "address":30000,
         "to_update":1,
         "um":"ppm",
@@ -87,7 +87,7 @@
     {
         "name":"val_PM4",
         "type":3,
-        "slave_address":3,
+        "slave_address":2,
         "address":30005,
         "to_update":1,
         "um":"ug/m3",
@@ -97,7 +97,7 @@
         "name":"val_PM2_5",
         "type":3,
         "address":30004,
-        "slave_address":5,
+        "slave_address":1,
         "to_update":1,
         "um":"ug/m3",
         "decimals":2
@@ -105,7 +105,7 @@
     {
         "name":"val_PM10",
         "type":3,
-        "slave_address":3,
+        "slave_address":2,
         "address":30006,
         "to_update":1,
         "um":"ug/m3",
@@ -115,7 +115,7 @@
         "name":"val_PM4",
         "type":3,
         "address":30005,
-        "slave_address":5,
+        "slave_address":1,
         "to_update":1,
         "um":"ug/m3",
         "decimals":2
@@ -123,7 +123,7 @@
     {
         "name":"Pressione",
         "type":3,
-        "slave_address":3,
+        "slave_address":2,
         "address":30007,
         "to_update":1,
         "um":"psi"
@@ -132,7 +132,7 @@
         "name":"val_PM10",
         "type":3,
         "address":30006,
-        "slave_address":5,
+        "slave_address":1,
         "to_update":1,
         "um":"ug/m3",
         "decimals":2
@@ -140,7 +140,7 @@
     {
         "name":"Temperatura",
         "type":3,
-        "slave_address":3,
+        "slave_address":2,
         "address":30008,
         "to_update":1,
         "um":"°C"
@@ -149,14 +149,14 @@
         "name":"Pressione",
         "type":3,
         "address":30007,
-        "slave_address":5,
+        "slave_address":1,
         "to_update":1,
         "um":"psi"
     },
     {
         "name":"Umidità",
         "type":3,
-        "slave_address":3,
+        "slave_address":2,
         "address":30009,
         "to_update":1,
         "um":"%"
@@ -165,14 +165,14 @@
         "name":"Temperatura",
         "type":3,
         "address":30008,
-        "slave_address":5,
+        "slave_address":1,
         "to_update":1,
         "um":"°C"
     },
     {
         "name":"Ozono",
         "type":3,
-        "slave_address":3,
+        "slave_address":2,
         "address":30010,
         "to_update":1,
         "um":"ppb"
@@ -181,14 +181,14 @@
         "name":"Umidità",
         "type":3,
         "address":30009,
-        "slave_address":5,
+        "slave_address":1,
         "to_update":1,
         "um":"%"
     },
     {
         "name":"Acqua ossigenata",
         "type":3,
-        "slave_address":3,
+        "slave_address":2,
         "address":30011,
         "to_update":1,
         "um":"ppm"
@@ -197,14 +197,14 @@
         "name":"Ozono",
         "type":3,
         "address":30010,
-        "slave_address":5,
+        "slave_address":1,
         "to_update":1,
         "um":"ppb"
     },
     {
         "name":"Assorbimento ventola",
         "type":3,
-        "slave_address":3,
+        "slave_address":2,
         "address":30012,
         "to_update":1,
         "um":"A",
@@ -212,7 +212,7 @@
     },
     {
         "name":"Acqua ossigenata",
-        "slave_address":5,
+        "slave_address":1,
         "type":3,
         "address":30011,
         "to_update":1,
@@ -222,7 +222,7 @@
         "name":"Assorbimento lampada",
         "type":3,
         "address":30013,
-        "slave_address":3,
+        "slave_address":2,
         "to_update":1,
         "um":"A",
         "decimals":2
@@ -231,7 +231,7 @@
         "name":"Assorbimento ventola",
         "type":3,
         "address":30012,
-        "slave_address":5,
+        "slave_address":1,
         "to_update":1,
         "um":"A",
         "decimals":2
@@ -240,7 +240,7 @@
         "name":"Ore utilizzo lampada",
         "type":3,
         "address":30014,
-        "slave_address":3,
+        "slave_address":2,
         "to_update":1,
         "um":"ore"
     },
@@ -248,7 +248,7 @@
         "name":"Assorbimento lampada",
         "type":3,
         "address":30013,
-        "slave_address":5,
+        "slave_address":1,
         "to_update":1,
         "um":"A",
         "decimals":2
@@ -257,7 +257,7 @@
         "name":"Velocità ventola",
         "type":3,
         "address":30015,
-        "slave_address":3,
+        "slave_address":2,
         "to_update":1,
         "um":"%"
     },
@@ -265,14 +265,14 @@
         "name":"Ore utilizzo lampada",
         "type":3,
         "address":30014,
-        "slave_address":5,
+        "slave_address":1,
         "to_update":1,
         "um":"ore"
     },
     {
         "name":"status",
         "type":3,
-        "slave_address":3,
+        "slave_address":2,
         "address":30016,
         "to_update":1,
         "um":"g"
@@ -281,7 +281,7 @@
         "name":"Velocità ventola",
         "type":3,
         "address":30015,
-        "slave_address":5,
+        "slave_address":1,
         "to_update":1,
         "um":"%"
     }
