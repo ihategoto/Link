@@ -98,6 +98,7 @@ class Handler:
             try:
                 job = client.reserve_job(timeout = 0.3)
             except BeanstalkError:
+                time.sleep(0.5)
                 continue
             data = job.job_data
             client.delete_job(job.job_id)
