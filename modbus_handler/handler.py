@@ -436,7 +436,7 @@ class Handler:
                 print("Errore MODBUS durante la lettura di {} da {}: {}".format(entry['address'], entry['slave_address'], e))
             except BeanstalkError as e:
                 print("Impossibile scrivere sul server BeansTalk il contenuto del sensore {} dello slave {}: {}".format(entry['address'], entry['slave_address'], e))
-            time.sleep(0.2)
+            time.sleep(0.4)
     """
     Ritorna l'indirizzo relativo, il functioncode adatto al sensore e la funzione corretta di minimalmodbus.
     
