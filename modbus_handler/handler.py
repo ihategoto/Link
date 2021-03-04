@@ -95,9 +95,10 @@ class Handler:
                 print("Errore MODBUS durante la lettura da {}: {}".format(slave['address'], e))
             except BeanstalkError as e:
                 print("Impossibile scrivere sul server BeansTalk il contenuto dello slave {}: {}".format(slave['address'], e))
-            job = client.reserve_job(timeout = 1)
-            print("{} {}".format(job.job_id, job.job_data))
-            """
+            try:
+                job = client.reserve_job(timeout = 1)
+            except BeanstalkError:
+                continue
             data = job.job_data
             client.delete_job(job.job_id)
             try:
@@ -117,7 +118,6 @@ class Handler:
                 print("Errore nel protocollo Modbus: {}".format(e))
             except InvalidRegister as e:
                 print("Indirizzo del registro non valido.")
-            """
     """
     Ritorna l'indirizzo relativo, il functioncode adatto al sensore e la funzione corretta di minimalmodbus.
     
