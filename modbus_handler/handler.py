@@ -56,7 +56,7 @@ class Handler:
             print("Impossibile leggere il contenuto del file di configurazione {}: {}".format(CONF_FILE, e))
             exit()
         #Se nel file di configurazione non vi è elencato nessuno slave chiudo il processo.
-        if len(slaves) == 0:
+        if len(self.slaves) == 0:
             print('La lista degli slave è vuota.\nControllare il contenuto del file:{}'.format(CONFIG_FILE))
             exit()
 
@@ -75,7 +75,7 @@ class Handler:
     Le eventuali eccezioni vengono gestite all'interno del metodo.
     """
     def refresh_values(self):
-        for slave in self.slave_instances:
+        for slave in self.slaves:
             self.serial_line.address = slave['address']
             try:
                 v_list = self.serial_line.read_registers(0, 17,functioncode=4)
