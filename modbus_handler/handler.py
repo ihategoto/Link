@@ -183,6 +183,8 @@ class WriteThread(threading.Thread):
                     print("Errore nel protocollo Modbus: {}".format(e))
                 except InvalidRegister as e:
                     print("Indirizzo del registro non valido.")
+                finally:
+                    mutex.release()
             
     def stopped(self):
         return self.stop_flag.is_set()
