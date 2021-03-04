@@ -14,7 +14,7 @@ TIME_OUT_READ = 1
 TIME_OUT_WRITE = 5
 CLOSE_PORT_AFTER_EACH_CALL = True
 
-REFRESH_RATE = 5 #seconds
+REFRESH_RATE = 30 #seconds
 
 #BEANSTALKD consts
 BEANSTALKD_HOST = '127.0.0.1'
@@ -436,7 +436,7 @@ class Handler:
                 print("Errore MODBUS durante la lettura di {} da {}: {}".format(entry['address'], entry['slave_address'], e))
             except BeanstalkError as e:
                 print("Impossibile scrivere sul server BeansTalk il contenuto del sensore {} dello slave {}: {}".format(entry['address'], entry['slave_address'], e))
-            #time.sleep(0.5)
+            time.sleep(0.5)
     """
     Ritorna l'indirizzo relativo, il functioncode adatto al sensore e la funzione corretta di minimalmodbus.
     
