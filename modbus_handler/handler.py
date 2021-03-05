@@ -405,8 +405,8 @@ class Handler:
     def refresh_values(self):
         if not hasattr(self, 'entries') or not hasattr(self, 'client') or not hasattr(self,'serial_instance'):
             raise AttributeError
-        print(repr(self.entries))
         for entry in self.entries:        
+            print_log("RetrieveThread", "pool slave: {}".format(entry['slave']))
             self.serial_instance.address = entry['slave']
             for data_type in entry:
                 if data_type == "slave":
@@ -493,11 +493,13 @@ class Handler:
     def get_beanstalk(self, data_tube, command_tube):
         self.client = BeanstalkClient(BEANSTALKD_HOST, BEANSTALKD_PORT)
         try:
+            print_log("RetrieveThread", "uso la tube:{}".format(data_tube))
             self.client.use(data_tube)
         except BeanstalkError as e:
             print_log("RetrieveThread", "impossibile utilizzare la tube {}: {}".format(data_tube, e))
             raise
         try:
+            print_log("RetrieveThread", "'watch' : {}".format(command_tube))
             self.client.watch(command_tube)
         except BeanstalkError as e:
             print_log("RetrieveThread", "impossibile utilizzare la tube {}: {}".format(command_tube, e))
