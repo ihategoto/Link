@@ -1,7 +1,7 @@
 import os, threading, minimalmodbus, serial, json, time, datetime, atexit, uuid
 from pystalk import BeanstalkClient, BeanstalkError
 
-DEBUG = True
+DEBUG = False
 
 #MODBUS consts
 SERIAL_PORT = '/dev/ttyS0'
@@ -422,7 +422,8 @@ class Handler:
                         elif data_type in ["bits", "coils"]:
                             print_log("RetrieveThread", "leggo {} da {}.".format(data_type, entry['slave']))
                             values = self.serial_instance.read_bits(entry[data_type]['start_address'] - BASE_ADDRESSES[data_type], entry[data_type]['length'], functioncode = READ_FUNCTIONCODES[data_type])
-                        for i in range(0,entry[data_type]['length']):
+                        print_log("RetrieveThread", "length : {}".format(entry[data_type]['length'])))
+                        entry[data_type]['length']):
                             data = {"slave" : entry['slave'], "sensor": entry[data_type]['start_address']+i, 'timestamp' : time.time(), "value" : value[i]}
                             self.client.put_job(json.dumps(data))
                     except (ValueError, TypeError) as e:
