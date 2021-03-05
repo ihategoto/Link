@@ -405,6 +405,7 @@ class Handler:
     def refresh_values(self):
         if not hasattr(self, 'entries') or not hasattr(self, 'client') or not hasattr(self,'serial_instance'):
             raise AttributeError
+        print(repr(self.entries))
         for entry in self.entries:        
             self.serial_instance.address = entry['slave']
             for data_type in entry:
