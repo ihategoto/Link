@@ -55,11 +55,6 @@ def get_entries(config_file):
         d = json.load(f)
     return d
 
-MANDATORY_FIELDS_SENSOR = ['address', 'type']
-MANDATORY_FIELDS_SLAVE = ['address', ]
-
-mutex = threading.Lock()
-
 """
 Utilities
 """
@@ -107,8 +102,11 @@ class InvalidNode(Exception):
 """
 La seguente funzione chiude interrompe tutti gli eventuali thread ancora in esecuzione (è necessaria?)
 """
-def clean_up_processes():
-    pass
+def clean_up_processes(driver):
+    if isistance(driver.retrieving_thread, threading.Thread) and driver.retrieving_thread.is_alive():
+        driver.retrieving_thread.stop()
+    if isinstance(driver.scanning_thred, threading.Thread) and driver.scanning_thread.is_alive():
+        driver.retriving_thread.stop()
 
 """
 La seguente classe rappresenta il thread che viene lanciato per effettuare il retrieve dei dati.
@@ -396,8 +394,7 @@ class Handler:
         if a_max-a_min+1 == length and len(set(addresses)) == length:
             return True, a_min
         else:
-            return False, a_min
-                
+            return False, a_min    
 
     """
     Effettua la lettura degli slave inseriti nella proprietà 'entries'
@@ -465,13 +462,6 @@ class Handler:
                     print("Indirizzo del registro non valido.")
                 time.sleep(DELAY_BETWEEN_POLL)
     """
-    Ritorna l'indirizzo relativo, il functioncode adatto al sensore e la funzione corretta di minimalmodbus.
-    
-    - slave: dict contenente tutte le informazioni riguardanti il sensore di cui si vuole scrivere sul database.
-    - sensor: dict contenente sia l'oggetto minimalmodbus.Instrument che i metadati inerenti allo slave.
-    
-    Ritorna: indirizzo relativo del sensore, il functioncode per l'operazione richiesta e la funzione adeguata per eseguirla.
-    """
     def get_call_info(self, serial_instance, sensor):
         if sensor['type'] == BIT:
             address = sensor['address'] - 10000
@@ -492,6 +482,7 @@ class Handler:
             callback = serial_instance.read_bit
             
         return address, functioncode, callback
+    """
 
     """
     Stabilisco una connessione con il server BeansTalk.
@@ -575,5 +566,5 @@ class Scanner(object):
         pass
 
 if __name__ == "__main__":
-    #atexit.register(clean_up_processes)
     d = Driver()
+    atexit.register(clean_up_processes, d)
