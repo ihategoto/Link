@@ -208,9 +208,8 @@ class Driver(object):
     Il metodo avvia il processo di scanning.
     """
     def scan(self, parameters):
-        if self.retrieving_thread is not None and self.retrieving_thread.is_alive() and self.write_thread is not None and self.write_thread.is_alive():
+        if self.retrieving_thread is not None and self.retrieving_thread.is_alive():
             self.retrieving_thread.stop()
-            self.write_thread.stop()
 
     """
     Il seguente metodo avvia il thread che si occuperà del retrieving dei dati.
@@ -244,10 +243,8 @@ class Driver(object):
                 print_log("Driver", "comando 'start': processo di retrieving in corso.")
                 return
             self.retrieving_thread = RetrieveThread()
-            self.write_thread = WriteThread()
         else:
             self.retrieving_thread = RetrieveThread()
-            self.write_thread = WriteThread()
 
         try:
             self.retrieving_thread.set_tubes(parameters[1], parameters[2])
