@@ -15,7 +15,7 @@ TIME_OUT_WRITE = 5 # secondi
 CLOSE_PORT_AFTER_EACH_CALL = True
 DELAY_BETWEEN_POLL = 0.5 # secondi
 
-REFRESH_RATE = 30 # secondi
+REFRESH_RATE = 8 # secondi
 
 #BEANSTALKD consts
 BEANSTALKD_HOST = '127.0.0.1'
@@ -447,6 +447,7 @@ class Handler:
                 self.client.delete_job(job.job_id)
                 try:
                     decoded_data = json.loads(data)
+                    print_log("RetrieveThread", "scrivo il comando: {}".format(decoded_data))
                     Handler.write(decoded_data['slave'], decoded_data['sensor'], decoded_data['value'])
                 except json.JSONDecodeError as e:
                     print("Impossibile decodificare il comando {}: {} ".format(data, e))
