@@ -409,6 +409,8 @@ class Handler:
         for entry in self.entries:        
             self.serial_instance.address = entry['slave']
             for data_type in entry:
+                if data_type == "slave":
+                    continue
                 """
                 In questo caso posso fare una singola chiamata con una lettura multipla.
                 """
