@@ -388,7 +388,7 @@ class Handler:
     """
     Controlla se gli indirizzi riportati nel file di configurazione sono contigui.
     """
-    def are_merged(obj):
+    def are_merged(self, obj):
         addresses = [o["address"] for o in obj]
         min = min(addresses)
         max = max(addresses)
