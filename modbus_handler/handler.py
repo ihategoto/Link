@@ -396,7 +396,7 @@ class Handler:
         min = min(addresses)
         max = max(addresses)
         length = len(addresses)
-        if max-min+1 == length and len(set(addresses)) == length
+        if max-min+1 == length and len(set(addresses)) == length:
             return True, min
         else:
             return False, min
