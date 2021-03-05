@@ -390,13 +390,13 @@ class Handler:
     """
     def are_merged(self, obj):
         addresses = [o["address"] for o in obj]
-        min = min(addresses)
-        max = max(addresses)
+        a_min = min(addresses)
+        a_max = max(addresses)
         length = len(addresses)
-        if max-min+1 == length and len(set(addresses)) == length:
-            return True, min
+        if a_max-a_min+1 == length and len(set(addresses)) == length:
+            return True, a_min
         else:
-            return False, min
+            return False, a_min
                 
 
     """
