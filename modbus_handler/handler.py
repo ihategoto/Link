@@ -100,15 +100,6 @@ class InvalidNode(Exception):
     pass
 
 """
-La seguente funzione chiude interrompe tutti gli eventuali thread ancora in esecuzione (è necessaria?)
-"""
-def clean_up_processes(driver):
-    if isistance(driver.retrieving_thread, threading.Thread) and driver.retrieving_thread.is_alive():
-        driver.retrieving_thread.stop()
-    if isinstance(driver.scanning_thred, threading.Thread) and driver.scanning_thread.is_alive():
-        driver.retriving_thread.stop()
-
-"""
 La seguente classe rappresenta il thread che viene lanciato per effettuare il retrieve dei dati.
 """
 class RetrieveThread(threading.Thread):
@@ -324,6 +315,13 @@ class Driver(object):
             if not os.path.isfile(words[3]):
                 raise InvalidCommand("il file di configurazione non valido per il comando 'start'.")
             return words
+        elif words[0] == "exit":
+            if isinstance(self.scanning_thread, threading.Thread) and self.scanning_thread.is_alive():
+                self.scanning_thread.stop()
+                self.driver_exit()
+            if isinstance(self.retrieving_thread, threading.Thread) and self.retrieving_thread.is_alive():
+                self.retrieving_thread.stop()
+                self.driver_exit()
         else:
             raise InvalidCommand("non corrisponde a nessun comando valido.")
 
@@ -564,4 +562,3 @@ class Scanner(object):
 
 if __name__ == "__main__":
     d = Driver()
-    atexit.register(clean_up_processes, d)
