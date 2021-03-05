@@ -424,6 +424,7 @@ class Handler:
                             values = self.serial_instance.read_bits(entry[data_type]['start_address'] - BASE_ADDRESSES[data_type], entry[data_type]['length'], functioncode = READ_FUNCTIONCODES[data_type])
                         print_log("RetrieveThread", "values : {}".format(values))
                         for i in range(0,entry[data_type]['length']):
+                            print("scrivo")
                             data = {"slave" : entry['slave'], "sensor": entry[data_type]['start_address']+i, 'timestamp' : time.time(), "value" : value[i]}
                             self.client.put_job(json.dumps(data))
                     except (ValueError, TypeError) as e:
