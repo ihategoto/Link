@@ -436,34 +436,33 @@ class Handler:
                     except minimalmodbus.ModbusException as e:
                         print_log("RetrieveThread", "Errore MODBUS durante la lettura in blocco da {}: {}".format(entry['slave'], e))
                     finally:
-                        try:
-                            job = self.client.reserve_job(timeout = 0.3)
-                        except BeanstalkError:
-                            time.sleep(DELAY_BETWEEN_POLL)
-                            continue
-                        data = job.job_data
-                        self.client.delete_job(job.job_id)
-                        try:
-                            decoded_data = json.loads(data)
-                            Handler.write(decoded_data['slave'], decoded_data['sensor'], decoded_data['value'])
-                        except json.JSONDecodeError as e:
-                            print("Impossibile decodificare il comando {}: {} ".format(data, e))
-                        except KeyError as e:
-                            print("Il formato del comando non è valido: {}".format(e))
-                        except ValueError as e:
-                            print("Valore non valido: {}".format(e))
-                        except TypeError as e:
-                            print("Tipo non valido: {}".format(e))
-                        except serial.SerialException as e:
-                            print("Errore della linea seriale: {}".format(e))
-                        except minimalmodbus.ModbusException as e:
-                            print("Errore nel protocollo Modbus: {}".format(e))
-                        except InvalidRegister as e:
-                            print("Indirizzo del registro non valido.")
                         time.sleep(DELAY_BETWEEN_POLL)
                 else:
                     print_log("RetrieveThread", "gli indirizzi non contigui non sono ancora supportati.")
-
+                try:
+                    job = self.client.reserve_job(timeout = 0.3)
+                except BeanstalkError:
+                    continue
+                data = job.job_data
+                self.client.delete_job(job.job_id)
+                try:
+                    decoded_data = json.loads(data)
+                    Handler.write(decoded_data['slave'], decoded_data['sensor'], decoded_data['value'])
+                except json.JSONDecodeError as e:
+                    print("Impossibile decodificare il comando {}: {} ".format(data, e))
+                except KeyError as e:
+                    print("Il formato del comando non è valido: {}".format(e))
+                except ValueError as e:
+                    print("Valore non valido: {}".format(e))
+                except TypeError as e:
+                    print("Tipo non valido: {}".format(e))
+                except serial.SerialException as e:
+                    print("Errore della linea seriale: {}".format(e))
+                except minimalmodbus.ModbusException as e:
+                    print("Errore nel protocollo Modbus: {}".format(e))
+                except InvalidRegister as e:
+                    print("Indirizzo del registro non valido.")
+                time.sleep(DELAY_BETWEEN_POLL)
     """
     Ritorna l'indirizzo relativo, il functioncode adatto al sensore e la funzione corretta di minimalmodbus.
     
