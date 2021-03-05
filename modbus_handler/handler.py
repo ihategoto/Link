@@ -127,16 +127,13 @@ class RetrieveThread(threading.Thread):
     def run(self):
         self.stop_flag.clear()
         while True:
-            mutex.acquire()
             now = int(time.time())
             try:
                 self.instance.refresh_values()
             except AttributeError:
                 print_log("RetrieveThread", "parametri non sufficienti per avviare il processo di retrieving.")
                 print_log("RetrieveThread", "esco!")
-                mutex.release()
                 return
-            mutex.release()
             if self.stopped():
                 print_log("RetrieveThread", "esco!")
                 return
