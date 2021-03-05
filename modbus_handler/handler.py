@@ -425,7 +425,6 @@ class Handler:
                         print_log("RetrieveThread", "values : {}".format(values))
                         i = 0
                         for v in values:
-                            print("scrivo")
                             data = {"slave" : entry['slave'], "sensor": entry[data_type]['start_address']+i, 'timestamp' : time.time(), "value" : v}
                             i += 1
                             try:
