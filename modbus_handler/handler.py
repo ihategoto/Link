@@ -434,7 +434,7 @@ class Handler:
                             time.sleep(DELAY_BETWEEN_POLL)
                             continue
                         data = job.job_data
-                        client.delete_job(job.job_id)
+                        self.client.delete_job(job.job_id)
                         try:
                             decoded_data = json.loads(data)
                             Handler.write(decoded_data['slave'], decoded_data['sensor'], decoded_data['value'])
