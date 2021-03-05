@@ -429,7 +429,7 @@ class Handler:
                         print_log("RetrieveThread", "Errore MODBUS durante la lettura in blocco da {}: {}".format(entry['slave'], e))
                     finally:
                         try:
-                            job = client.reserve_job(timeout = 0.3)
+                            job = self.client.reserve_job(timeout = 0.3)
                         except BeanstalkError:
                             time.sleep(DELAY_BETWEEN_POLL)
                             continue
