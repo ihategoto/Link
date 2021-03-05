@@ -13,7 +13,7 @@ MODE = minimalmodbus.MODE_RTU
 TIME_OUT_READ = 1 # secondi
 TIME_OUT_WRITE = 5 # secondi
 CLOSE_PORT_AFTER_EACH_CALL = True
-DELAY_BETWEEN_POLL = 0.5 # secondi
+DELAY_BETWEEN_POLL = 1 # secondi
 
 REFRESH_RATE = 8 # secondi
 
