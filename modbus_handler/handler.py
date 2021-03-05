@@ -422,7 +422,7 @@ class Handler:
                         elif data_type in ["bits", "coils"]:
                             print_log("RetrieveThread", "leggo {} da {}.".format(data_type, entry['slave']))
                             values = self.serial_instance.read_bits(entry[data_type]['start_address'] - BASE_ADDRESSES[data_type], entry[data_type]['length'], functioncode = READ_FUNCTIONCODES[data_type])
-                        print_log("RetrieveThread", "length : {}".format(entry[data_type]['length']))
+                        print_log("RetrieveThread", "values : {}".format(values))
                         for i in range(0,entry[data_type]['length']):
                             data = {"slave" : entry['slave'], "sensor": entry[data_type]['start_address']+i, 'timestamp' : time.time(), "value" : value[i]}
                             self.client.put_job(json.dumps(data))
@@ -496,7 +496,7 @@ class Handler:
     def get_beanstalk(self, data_tube, command_tube):
         self.client = BeanstalkClient(BEANSTALKD_HOST, BEANSTALKD_PORT)
         try:
-            print_log("RetrieveThread", "uso la tube:{}".format(data_tube))
+            print_log("RetrieveThread", "uso la tube : {}".format(data_tube))
             self.client.use(data_tube)
         except BeanstalkError as e:
             print_log("RetrieveThread", "impossibile utilizzare la tube {}: {}".format(data_tube, e))
