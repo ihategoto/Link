@@ -230,5 +230,63 @@
         }
       ]
     }
+  },
+  {
+    "address": 5,
+    "map": {
+      "input_registers": [
+        {
+          "address": 30000
+        },
+        {
+          "address": 30001
+        },
+        {
+          "address": 30002
+        },
+        {
+          "address": 30003
+        },
+        {
+          "address": 30004
+        },
+        {
+          "address": 30005
+        },
+        {
+          "address": 30006
+        },
+        {
+          "address": 30007
+        },
+        {
+          "address": 30008
+        },
+        {
+          "address": 30009
+        },
+        {
+          "address": 30010
+        },
+        {
+          "address": 30011
+        },
+        {
+          "address": 30012
+        },
+        {
+          "address": 30013
+        },
+        {
+          "address": 30014
+        },
+        {
+          "address": 30015
+        },
+        {
+          "address": 30016
+        }
+      ]
+    }
   }
 ]
