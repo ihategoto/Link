@@ -5,16 +5,17 @@ DEBUG = True
 
 #MODBUS consts
 SERIAL_PORT = '/dev/ttyS0'
-BAUDRATE = 9600
+BAUDRATE = 9600 # bps
 BYTESIZE = 8
 PARITY = serial.PARITY_NONE
 STOP_BITS = 1
 MODE = minimalmodbus.MODE_RTU
-TIME_OUT_READ = 1
-TIME_OUT_WRITE = 5
+TIME_OUT_READ = 1 # secondi
+TIME_OUT_WRITE = 5 # secondi
 CLOSE_PORT_AFTER_EACH_CALL = True
+DELAY_BETWEEN_POLL = 0.5 # secondi
 
-REFRESH_RATE = 30 #seconds
+REFRESH_RATE = 30 # secondi
 
 #BEANSTALKD consts
 BEANSTALKD_HOST = '127.0.0.1'
@@ -22,10 +23,29 @@ BEANSTALKD_PORT = 11300
 SERVER_TUBE = 'driver'
 
 #MODBUS data types
-BIT = 0
-COIL = 1
+BIT = 1
+COIL = 2
 INPUT_REGISTER = 3
 HOLDING_REGISTER = 4
+
+WRITE_FUNCTIONCODES = {
+    'coils' : 5,
+    'holding_registers' : 6
+}
+
+READ_FUNCTIONCODES = {
+    'bits' : 2,
+    'coils' : 1,
+    'input_registers' : 4,
+    'holding_registers' : 3
+} 
+
+BASE_ADDRESSES = {
+    'bits' : 10000,
+    'coils' : 0,
+    'input_registers' : 30000,
+    'holding_registers' : 40000
+}
 
 #MODBUS SCANNER consts
 UPPER_BOUND_ADDRESS = 32
@@ -100,8 +120,8 @@ class RetrieveThread(threading.Thread):
         self.instance = Handler()
         self.stop_flag = threading.Event()
 
-    def set_tube(self, tube):
-        self.instance.set_tube(tube)
+    def set_tubes(self, data_tube, command_tube):
+        self.instance.get_beanstalk(data_tube, command_tube)
 
     def set_config(self, config_file):
         self.instance.set_config(config_file)
@@ -130,67 +150,7 @@ class RetrieveThread(threading.Thread):
     def stop(self):
         self.stop_flag.set()
 
-"""
-La seguente classe rappresenta il thread che viene lanciato per eseguire eventuali scritture sugli slave.
-"""
-class WriteThread(threading.Thread):
 
-    def __init__(self, args = {}):
-        threading.Thread.__init__(self)
-        self.stop_flag = threading.Event()
-
-    def set_tube(self, tube):
-        self.command_tube = tube
-
-    def run(self):
-        if not hasattr(self, 'command_tube'):
-            print_log("WriteThread", "parametri non sufficienti per avviare il thread.")
-            return
-        self.stop_flag.clear()
-        client = BeanstalkClient(BEANSTALKD_HOST, BEANSTALKD_PORT, auto_decode = True)
-        try:
-            client.watch(self.command_tube)
-        except BeanstalkError as e:
-            print_log("write_thread","impossibile inserire nella watchlist la tube '{}': {}".format(INPUT_TUBE, e))
-
-        while True:
-            """
-            if mutex.locked():
-                mutex.release()
-            """
-            if self.stopped():
-                print_log("WriteThread", "esco!")
-                return
-            for job in client.reserve_iter():
-                data = job.job_data
-                client.delete_job(job.job_id)
-                mutex.acquire()
-                try:
-                    decoded_data = json.loads(data)
-                    print_log("WriteThread", "eseguo il comando {}".format(decoded_data))
-                    Handler.write(decoded_data['slave'], decoded_data['sensor'], decoded_data['value'])
-                except json.JSONDecodeError as e:
-                    print("Impossibile decodificare il comando {}: {} ".format(data, e))
-                except KeyError as e:
-                    print("Il formato del comando non è valido: {}".format(e))
-                except ValueError as e:
-                    print("Valore non valido: {}".format(e))
-                except TypeError as e:
-                    print("Tipo non valido: {}".format(e))
-                except serial.SerialException as e:
-                    print("Errore della linea seriale: {}".format(e))
-                except minimalmodbus.ModbusException as e:
-                    print("Errore nel protocollo Modbus: {}".format(e))
-                except InvalidRegister as e:
-                    print("Indirizzo del registro non valido.")
-                finally:
-                    mutex.release()
-            
-    def stopped(self):
-        return self.stop_flag.is_set()
-
-    def stop(self):
-        self.stop_flag.set()
 """
 La classe 'Driver' soprintende e coordina l'azione delle due classi 'Handler' e 'Scanner'.
 """
@@ -204,10 +164,9 @@ class Driver(object):
         print("\t***Driver attivato***")
         self.scanning_thread = None
         self.retrieving_thread = None
-        self.write_thread = None
         self.client = BeanstalkClient(BEANSTALKD_HOST, BEANSTALKD_PORT, auto_decode = True)
         try:
-            print_log("Driver", "'watch': {} .".format(SERVER_TUBE))
+            print_log("Driver", "'watch': {}".format(SERVER_TUBE))
             self.client.watch(SERVER_TUBE)
         except BeanstalkError as e:
             print_log("Driver", "'watch': {} - Fallito: {}".format(SERVER_TUBE, e))
@@ -267,15 +226,20 @@ class Driver(object):
     Il metodo avvia il processo di retrieving.
     """
     def start(self, parameters):
+        """
+        Se è in corso una scansione non posso cominciare il processo di retrieving.
+        """
         if isinstance(self.scanning_thread, threading.Thread):
             if self.scanning_thread.is_alive():
                 print_log("Driver", "comando 'start': processo di scanning in corso.")
                 return
         """
-        Si assume che i due thread RetrieveThread e WriteThread siano coordinati.
-        Ovvero che se RetrieveThread è attivo lo è anche WriteThread.
+        Controllo se la proprietà 'retrieving_thread' è un thread.
         """
         if isinstance(self.retrieving_thread, threading.Thread):
+            """
+            Se il thread è ancora attivo significa che il processo di retrieving è ancora in corso: esco.
+            """
             if self.retrieving_thread.is_alive():
                 print_log("Driver", "comando 'start': processo di retrieving in corso.")
                 return
@@ -286,7 +250,7 @@ class Driver(object):
             self.write_thread = WriteThread()
 
         try:
-            self.retrieving_thread.set_tube(parameters[1])
+            self.retrieving_thread.set_tubes(parameters[1], parameters[2])
         except BeanstalkError as e:
             print_log("Driver", "comando 'start': impossibile settare la tube dei dati: {}".format(e))
             return 
@@ -303,9 +267,7 @@ class Driver(object):
         except serial.SerialException as e:
             print_log("Driver", "comando 'start': errore nell'utilizzo della linea seriale: {}".format(e))
 
-        self.write_thread.set_tube(parameters[2])
         self.retrieving_thread.start()
-        #self.write_thread.start()
     
     """
     Il seguente metodo fa il parsing del comando arrivato sulla tube 'driver'.
@@ -386,57 +348,114 @@ La classe 'Handler' gestisce lo scambio di dati in tempo reale con gli slave MOD
 """
 class Handler:
 
-    def set_tube(self,tube):
-        self.get_beanstalk(tube)
-
     def set_config(self, config_file):
-        self.entries = get_entries(config_file)
-        if len(self.entries) == 0:
+        """
+        Ogni entry rappresenta uno slave.
+        """
+        entries = get_entries(config_file)
+        if len(entries) == 0:
             raise EmptyMesh
-
-        for entry in self.entries:
-            if not self.check_fields(entry, False):
+        i = 0
+        self.entries = []
+        for entry in entries:
+            local_entry = {}
+            try:
+                local_entry['slave'] = entry['address']
+                e_map = entry['map']
+            except KeyError:
+                print_log("RetrieveThread", "l'{}-esimo slave nel file {} è configurato in maniera non valida: salto.".format(i, config_file))
+                i += 1
                 continue
             if not hasattr(self, 'serial_instance'):
-                try:
-                    self.serial_instance = minimalmodbus.Instrument(SERIAL_PORT, entry['slave_address'], mode = MODE, close_port_after_each_call = CLOSE_PORT_AFTER_EACH_CALL, debug = DEBUG)
-                    self.serial_instance.serial.baudrate = BAUDRATE
-                    self.serial_instance.serial.parity = PARITY
-                    self.serial_instance.serial.bytesize = BYTESIZE
-                    self.serial_instance.serial.stopbits = STOP_BITS
-                    self.serial_instance.serial.timeout = TIME_OUT_READ
-                    self.serial_instance.serial.write_timeout = TIME_OUT_WRITE
-                except Exception:
-                    raise
+                self.serial_instance = minimalmodbus.Instrument(SERIAL_PORT, entry['address'], mode = MODE, close_port_after_each_call = CLOSE_PORT_AFTER_EACH_CALL, debug = DEBUG)
+                self.serial_instance.serial.baudrate = BAUDRATE
+                self.serial_instance.serial.parity = PARITY
+                self.serial_instance.serial.bytesize = BYTESIZE
+                self.serial_instance.serial.stopbits = STOP_BITS
+                self.serial_instance.serial.timeout = TIME_OUT_READ
+                self.serial_instance.serial.write_timeout = TIME_OUT_WRITE
+            for data_type in e_map:
+                if data_type not in ["input_registers", "holding_registers", "bits", "coils"]:
+                    print_log("RetrieveThread", "nella mappa dell'{}-esimo slave è presente una dicitura non valida: {}".format(i, data_type))
+                    continue
+                local_entry[data_type] = {}
+                local_entry[data_type]['merged'], min_address = self.are_merged(e_map[data_type])
+                if local_entry[data_type]['merged']:
+                    local_entry[data_type]['length'] = len(e_map[data_type])
+                    local_entry[data_type]['start_address'] = min_address
+                else:
+                    local_entry[data_type]['map'] = e_map[data_type]
+            i += 1
+            self.entries.append(local_entry)
 
     """
-    Fa il refresh dei valori presenti in ogni slave classificato come 'to_update' : 1.
-    Nel caso in cui un sensore non abbia sufficienti informazioni associate, la sua lettura viene saltata.
-    Le eventuali eccezioni vengono gestite all'interno del metodo.
+    Controlla se gli indirizzi riportati nel file di configurazione sono contigui.
+    """
+    def are_merged(obj):
+        addresses = [o["address"] for o in obj]
+        min = min(addresses)
+        max = max(addresses)
+        length = len(addresses)
+        if max-min+1 == length and len(set(addresses)) == length
+            return True, min
+        else:
+            return False, min
+                
+
+    """
+    Effettua la lettura degli slave inseriti nella proprietà 'entries'
     """
     def refresh_values(self):
         if not hasattr(self, 'entries') or not hasattr(self, 'client') or not hasattr(self,'serial_instance'):
             raise AttributeError
-        for entry in self.entries:
-            #Se il sensore non deve essere aggiornato salto.
-            if entry['to_update'] == 0:
-                continue
-            if not self.check_fields(entry, True):
-                print('Errore di configurazione di un sensore appartenente allo slave {}! Salto la scrittura sul database.'.format(slave['info']['address']))
-                continue        
-            self.serial_instance.address = entry['slave_address']        
-            address, functioncode, callback = self.get_call_info(self.serial_instance, entry)
-            try:
-                value = callback(address, functioncode = functioncode)
-                data = {'slave' : entry['slave_address'], 'sensor' : entry['address'], 'timestamp' : time.time(), "value" : value}
-                self.client.put_job(json.dumps(data))
-            except (ValueError, TypeError) as e:
-                print("Qualcosa è andato storto durante la lettura di {} da {}:{}".format(entry['address'], entry['slave_address'], e))
-            except minimalmodbus.ModbusException as e:
-                print("Errore MODBUS durante la lettura di {} da {}: {}".format(entry['address'], entry['slave_address'], e))
-            except BeanstalkError as e:
-                print("Impossibile scrivere sul server BeansTalk il contenuto del sensore {} dello slave {}: {}".format(entry['address'], entry['slave_address'], e))
-            time.sleep(1)
+        for entry in self.entries:        
+            self.serial_instance.address = entry['slave']
+            for data_type in entry:
+                """
+                In questo caso posso fare una singola chiamata con una lettura multipla.
+                """
+                if entry[data_type]['merged']:
+                    try:
+                        if data_type in ["input_registers", "holding_registers"]:
+                            values = read_registers(entry[data_type]['start_address'] - BASE_ADDRESSES[data_type], entry[data_type]['length'], functioncode = READ_FUNCTIONCODES[data_type])
+                        elif data_type in ["bits", "coils"]:
+                            values = read_bits(entry[data_type]['start_address'] - BASE_ADDRESSES[data_type], entry[data_type]['length'], functioncode = READ_FUNCTIONCODES[data_type])
+                        for i in [0,entry[data_type]['length']]:
+                            data = {"slave" : entry['slave'], "sensor": entry[data_type]['start_address']+i, 'timestamp' : time.time(), "value" : value[i]}
+                            self.client.put_job(data)
+                    except (ValueError, TypeError) as e:
+                        print_log("RetrieveThread", "Qualcosa è andato storto durante la lettura in blocco da {}:{}".format(entry['slave'], e))
+                    except minimalmodbus.ModbusException as e:
+                        print_log("RetrieveThread", "Errore MODBUS durante la lettura in blocco da {}: {}".format(entry['slave'], e))
+                    finally:
+                        try:
+                            job = client.reserve_job(timeout = 0.3)
+                        except BeanstalkError:
+                            time.sleep(DELAY_BETWEEN_POLL)
+                            continue
+                        data = job.job_data
+                        client.delete_job(job.job_id)
+                        try:
+                            decoded_data = json.loads(data)
+                            Handler.write(decoded_data['slave'], decoded_data['sensor'], decoded_data['value'])
+                        except json.JSONDecodeError as e:
+                            print("Impossibile decodificare il comando {}: {} ".format(data, e))
+                        except KeyError as e:
+                            print("Il formato del comando non è valido: {}".format(e))
+                        except ValueError as e:
+                            print("Valore non valido: {}".format(e))
+                        except TypeError as e:
+                            print("Tipo non valido: {}".format(e))
+                        except serial.SerialException as e:
+                            print("Errore della linea seriale: {}".format(e))
+                        except minimalmodbus.ModbusException as e:
+                            print("Errore nel protocollo Modbus: {}".format(e))
+                        except InvalidRegister as e:
+                            print("Indirizzo del registro non valido.")
+                        time.sleep(DELAY_BETWEEN_POLL)
+                else:
+                    print_log("RetrieveThread", "gli indirizzi non contigui non sono ancora supportati.")
+
     """
     Ritorna l'indirizzo relativo, il functioncode adatto al sensore e la funzione corretta di minimalmodbus.
     
@@ -467,36 +486,22 @@ class Handler:
         return address, functioncode, callback
 
     """
-    Controllo se il file di configurazione ha tutti i campi necessari.
-    Parametri:
-
-    - obj: l'oggetto su cui controllare i campi.
-    - slave_or_sensor: flag che indica se si stanno controllando i campi di uno slave o di un sensore.
-    
-    Ritorna True se l'oggetto contiene tutti campi necessari, False altrimenti.
+    Stabilisco una connessione con il server BeansTalk.
+    Questa connessione dovrà scrivere sulla tube 'data_tube',
+    e dovrà ricevere messaggi sulla tube 'command_tube'.
     """
-    def check_fields(self, obj, slave_or_sensor):
-        if slave_or_sensor:
-            for field in MANDATORY_FIELDS_SENSOR:
-                if field not in obj:
-                    return False
-        else:
-            for field in MANDATORY_FIELDS_SLAVE:
-                if field not in obj:
-                    return False
-        return True
-
-    """
-    Stabilisco una connessione con il server beanstalkd, ed inserisco il producer nella tube indicata.
-    In caso di insuccesso termino il processo.
-    """
-    def get_beanstalk(self, tube):
+    def get_beanstalk(self, data_tube, command_tube):
         self.client = BeanstalkClient(BEANSTALKD_HOST, BEANSTALKD_PORT)
         try:
-            self.client.use(tube)
+            self.client.use(data_tube)
         except BeanstalkError as e:
-            print("Impossibile utilizzare la tube: {}!".format(e))
-            exit()
+            print_log("RetrieveThread", "impossibile utilizzare la tube {}: {}".format(data_tube, e))
+            raise
+        try:
+            self.client.watch(command_tube)
+        except BeanstalkError as e:
+            print_log("RetrieveThread", "impossibile utilizzare la tube {}: {}".format(command_tube, e))
+            raise
 
     """
     Metodo statico utilizzato per scrivere su un sensore attraverso modbus.
