@@ -418,10 +418,10 @@ class Handler:
                     try:
                         if data_type in ["input_registers", "holding_registers"]:
                             print_log("RetrieveThread", "leggo {} da {}.".format(data_type, entry['slave']))
-                            values = read_registers(entry[data_type]['start_address'] - BASE_ADDRESSES[data_type], entry[data_type]['length'], functioncode = READ_FUNCTIONCODES[data_type])
+                            values = self.serial_instance.read_registers(entry[data_type]['start_address'] - BASE_ADDRESSES[data_type], entry[data_type]['length'], functioncode = READ_FUNCTIONCODES[data_type])
                         elif data_type in ["bits", "coils"]:
                             print_log("RetrieveThread", "leggo {} da {}.".format(data_type, entry['slave']))
-                            values = read_bits(entry[data_type]['start_address'] - BASE_ADDRESSES[data_type], entry[data_type]['length'], functioncode = READ_FUNCTIONCODES[data_type])
+                            values = self.serial_instance.read_bits(entry[data_type]['start_address'] - BASE_ADDRESSES[data_type], entry[data_type]['length'], functioncode = READ_FUNCTIONCODES[data_type])
                         for i in range(0,entry[data_type]['length']):
                             data = {"slave" : entry['slave'], "sensor": entry[data_type]['start_address']+i, 'timestamp' : time.time(), "value" : value[i]}
                             self.client.put_job(json.dumps(data))
