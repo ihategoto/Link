@@ -426,7 +426,10 @@ class Handler:
                         for i in range(0,entry[data_type]['length']):
                             print("scrivo")
                             data = {"slave" : entry['slave'], "sensor": entry[data_type]['start_address']+i, 'timestamp' : time.time(), "value" : value[i]}
-                            self.client.put_job(json.dumps(data))
+                            try:
+                                self.client.put_job(json.dumps(data))
+                            except BeanstalkError as e:
+                                print_log("RetrieveThread", "Errore nella scrittura su Beanstalk : {}".format(e))
                     except (ValueError, TypeError) as e:
                         print_log("RetrieveThread", "Qualcosa è andato storto durante la lettura in blocco da {}:{}".format(entry['slave'], e))
                     except minimalmodbus.ModbusException as e:
